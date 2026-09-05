@@ -2,24 +2,41 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, typography } from '../theme/theme';
-import { RespostaValor } from '../types';
+import { Pessoa, RespostaDetalhe, RespostaValor } from '../types';
 import PhotoCapture from './PhotoCapture';
+import SelectField from './SelectField';
+import TextField from './TextField';
+
+const NINGUEM = 'Ninguém';
 
 interface ChecklistItemRowProps {
   pergunta: string;
   valor?: RespostaValor;
   onChange: (valor: RespostaValor) => void;
-  fotoUri?: string | null;
-  onChangeFoto: (uri: string | null) => void;
+  detalhe: RespostaDetalhe;
+  onChangeDetalhe: (patch: Partial<RespostaDetalhe>) => void;
+  pessoas: Pessoa[];
 }
 
 export default function ChecklistItemRow({
   pergunta,
   valor,
   onChange,
-  fotoUri,
-  onChangeFoto,
+  detalhe,
+  onChangeDetalhe,
+  pessoas,
 }: ChecklistItemRowProps) {
+  const opcoesAtribuir = [NINGUEM, ...pessoas.map((p) => p.nome)];
+
+  const handleSelecionarAtribuido = (nome: string) => {
+    if (nome === NINGUEM) {
+      onChangeDetalhe({ atribuidoAId: null, atribuidoANome: null });
+      return;
+    }
+    const pessoa = pessoas.find((p) => p.nome === nome);
+    onChangeDetalhe({ atribuidoAId: pessoa?.id ?? null, atribuidoANome: pessoa?.nome ?? null });
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.perguntaRow}>
@@ -42,9 +59,35 @@ export default function ChecklistItemRow({
           onPress={() => onChange('Não')}
         />
       </View>
-      <View style={styles.photoRow}>
-        <PhotoCapture fotoUri={fotoUri} onChange={onChangeFoto} />
-      </View>
+
+      {valor === 'Não' && (
+        <View style={styles.detalheBox}>
+          <TextField
+            label="Comentário"
+            placeholder="O que foi observado?"
+            value={detalhe.comentario}
+            onChangeText={(texto) => onChangeDetalhe({ comentario: texto })}
+            multiline
+            numberOfLines={2}
+            style={styles.comentarioInput}
+            icon="chatbubble-ellipses-outline"
+          />
+          <PhotoCapture
+            fotoUri={detalhe.fotoUri}
+            onChange={(uri) => onChangeDetalhe({ fotoUri: uri })}
+          />
+          <View style={styles.atribuirWrap}>
+            <SelectField
+              label="Atribuir tarefa a"
+              options={opcoesAtribuir}
+              value={detalhe.atribuidoANome ?? NINGUEM}
+              onChange={handleSelecionarAtribuido}
+              icon="person-add-outline"
+              placeholder={NINGUEM}
+            />
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -122,9 +165,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginLeft: spacing.lg,
   },
-  photoRow: {
-    marginLeft: spacing.lg,
-  },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -144,5 +184,19 @@ const styles = StyleSheet.create({
   optionLabel: {
     ...typography.label,
     textTransform: 'none',
+  },
+  detalheBox: {
+    marginLeft: spacing.lg,
+    marginTop: spacing.sm,
+    backgroundColor: colors.dangerBg,
+    borderRadius: radius.md,
+    padding: spacing.md,
+  },
+  comentarioInput: {
+    minHeight: 60,
+    textAlignVertical: 'top',
+  },
+  atribuirWrap: {
+    marginTop: spacing.xs,
   },
 });

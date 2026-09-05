@@ -12,20 +12,25 @@ import {
 } from 'react-native';
 import AdminCategoriasTab from '../components/AdminCategoriasTab';
 import AdminHistoricoTab from '../components/AdminHistoricoTab';
+import AdminSetoresTab from '../components/AdminSetoresTab';
 import Button from '../components/Button';
 import Header from '../components/Header';
 import { listCategorias } from '../db/categoriasRepo';
+import { listPessoas } from '../db/pessoasRepo';
 import { alternarAtivoQuestao, excluirQuestao, listTodasQuestoes } from '../db/questoesRepo';
+import { listSetores } from '../db/setoresRepo';
 import { colors, radius, shadow, spacing, typography } from '../theme/theme';
-import { Categoria, Questao, RootStackParamList } from '../types';
+import { Categoria, Pessoa, Questao, RootStackParamList, Setor } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Admin'>;
-type Aba = 'perguntas' | 'categorias' | 'historico';
+type Aba = 'perguntas' | 'categorias' | 'setores' | 'historico';
 
 export default function AdminScreen({ navigation }: Props) {
   const [aba, setAba] = useState<Aba>('perguntas');
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [questoes, setQuestoes] = useState<Questao[]>([]);
+  const [setores, setSetores] = useState<Setor[]>([]);
+  const [pessoas, setPessoas] = useState<Pessoa[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -34,9 +39,16 @@ export default function AdminScreen({ navigation }: Props) {
   const carregar = useCallback(async () => {
     setLoadError(null);
     try {
-      const [cats, qs] = await Promise.all([listCategorias(), listTodasQuestoes()]);
+      const [cats, qs, sets, ps] = await Promise.all([
+        listCategorias(),
+        listTodasQuestoes(),
+        listSetores(),
+        listPessoas(),
+      ]);
       setCategorias(cats);
       setQuestoes(qs);
+      setSetores(sets);
+      setPessoas(ps);
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : 'Erro ao carregar os dados.');
     }
@@ -57,12 +69,6 @@ export default function AdminScreen({ navigation }: Props) {
     setRefreshing(false);
   }, [carregar]);
 
-  const categoriaPorId = useMemo(() => {
-    const map = new Map<string, Categoria>();
-    categorias.forEach((c) => map.set(c.id, c));
-    return map;
-  }, [categorias]);
-
   const perguntasPorCategoria = useMemo(() => {
     const map: Record<string, number> = {};
     questoes.forEach((q) => {
@@ -70,6 +76,14 @@ export default function AdminScreen({ navigation }: Props) {
     });
     return map;
   }, [questoes]);
+
+  const pessoasPorSetor = useMemo(() => {
+    const map: Record<string, number> = {};
+    pessoas.forEach((p) => {
+      map[p.setorId] = (map[p.setorId] ?? 0) + 1;
+    });
+    return map;
+  }, [pessoas]);
 
   const gruposPerguntas = useMemo(() => {
     return categorias
@@ -137,6 +151,7 @@ export default function AdminScreen({ navigation }: Props) {
         >
           <TabButton label="Perguntas" icon="checkbox-outline" active={aba === 'perguntas'} onPress={() => setAba('perguntas')} />
           <TabButton label="Categorias" icon="pricetags-outline" active={aba === 'categorias'} onPress={() => setAba('categorias')} />
+          <TabButton label="Setores" icon="business-outline" active={aba === 'setores'} onPress={() => setAba('setores')} />
           <TabButton label="Histórico" icon="time-outline" active={aba === 'historico'} onPress={() => setAba('historico')} />
         </ScrollView>
         <Button label="Sair" variant="text" icon="log-out-outline" onPress={handleLogout} style={styles.logoutButton} />
@@ -236,6 +251,19 @@ export default function AdminScreen({ navigation }: Props) {
           <AdminCategoriasTab
             categorias={categorias}
             perguntasPorCategoria={perguntasPorCategoria}
+            navigation={navigation}
+            onChanged={carregar}
+          />
+          <View style={styles.scrollSpacer} />
+        </ScrollView>
+      ) : aba === 'setores' ? (
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        >
+          <AdminSetoresTab
+            setores={setores}
+            pessoasPorSetor={pessoasPorSetor}
             navigation={navigation}
             onChanged={carregar}
           />

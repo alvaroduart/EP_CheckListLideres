@@ -167,22 +167,39 @@ export default function AdminHistoricoTab() {
                       ) : null}
                       {detalhe?.respostas.map((r, idx) => (
                         <View key={idx} style={styles.respostaRow}>
-                          <View style={styles.respostaTextWrap}>
-                            <Text style={styles.respostaCategoria}>{r.categoria}</Text>
-                            <Text style={styles.respostaPergunta}>{r.pergunta}</Text>
+                          <View style={styles.respostaTopRow}>
+                            <View style={styles.respostaTextWrap}>
+                              <Text style={styles.respostaCategoria}>{r.categoria}</Text>
+                              <Text style={styles.respostaPergunta}>{r.pergunta}</Text>
+                            </View>
+                            <View style={styles.respostaRight}>
+                              {r.fotoUri ? (
+                                <Pressable onPress={() => setFotoPreview(r.fotoUri!)}>
+                                  <Image source={{ uri: r.fotoUri }} style={styles.respostaThumb} />
+                                </Pressable>
+                              ) : null}
+                              <Ionicons
+                                name={r.resposta === 'Sim' ? 'checkmark-circle' : 'close-circle'}
+                                size={18}
+                                color={r.resposta === 'Sim' ? colors.success : colors.danger}
+                              />
+                            </View>
                           </View>
-                          <View style={styles.respostaRight}>
-                            {r.fotoUri ? (
-                              <Pressable onPress={() => setFotoPreview(r.fotoUri!)}>
-                                <Image source={{ uri: r.fotoUri }} style={styles.respostaThumb} />
-                              </Pressable>
-                            ) : null}
-                            <Ionicons
-                              name={r.resposta === 'Sim' ? 'checkmark-circle' : 'close-circle'}
-                              size={18}
-                              color={r.resposta === 'Sim' ? colors.success : colors.danger}
-                            />
-                          </View>
+                          {(r.comentario || r.atribuidoANome) && (
+                            <View style={styles.respostaDetalheBox}>
+                              {r.comentario ? (
+                                <Text style={styles.respostaComentario}>"{r.comentario}"</Text>
+                              ) : null}
+                              {r.atribuidoANome ? (
+                                <View style={styles.respostaAtribuidoRow}>
+                                  <Ionicons name="person-outline" size={12} color={colors.primary} />
+                                  <Text style={styles.respostaAtribuido}>
+                                    Atribuído a {r.atribuidoANome}
+                                  </Text>
+                                </View>
+                              ) : null}
+                            </View>
+                          )}
                         </View>
                       ))}
                       <Pressable style={styles.deleteButton} onPress={() => handleExcluir(registro)}>
@@ -298,12 +315,36 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   respostaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+  },
+  respostaTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  respostaDetalheBox: {
+    marginTop: spacing.xs,
+    backgroundColor: colors.dangerBg,
+    borderRadius: radius.sm,
+    padding: spacing.sm,
+  },
+  respostaComentario: {
+    fontSize: 12,
+    color: colors.textPrimary,
+    fontStyle: 'italic',
+  },
+  respostaAtribuidoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  respostaAtribuido: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.primary,
+    marginLeft: 4,
   },
   respostaTextWrap: {
     flex: 1,

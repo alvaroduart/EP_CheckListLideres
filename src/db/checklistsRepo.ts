@@ -1,6 +1,8 @@
 import { supabase } from '../config/supabase';
 import { ChecklistDetalhe, ChecklistPayload, ChecklistRegistro, RespostaChecklist } from '../types';
 import { generateId } from '../utils/id';
+import { criarNotificacoes } from './notificacoesRepo';
+import { enviarPushEmMassa } from '../utils/pushNotifications';
 
 function mapRegistro(row: any): ChecklistRegistro {
   return {
@@ -24,6 +26,9 @@ function mapResposta(row: any): RespostaChecklist {
     pergunta: row.pergunta_texto,
     resposta: row.resposta,
     fotoUri: row.foto_uri,
+    comentario: row.comentario,
+    atribuidoAId: row.atribuido_a_id,
+    atribuidoANome: row.atribuido_a_nome,
   };
 }
 
@@ -45,10 +50,72 @@ export async function salvarChecklist(payload: ChecklistPayload): Promise<void> 
     pergunta_texto: r.pergunta,
     resposta: r.resposta,
     foto_uri: r.fotoUri ?? null,
+    comentario: r.comentario ?? null,
+    atribuido_a_id: r.atribuidoAId ?? null,
+    atribuido_a_nome: r.atribuidoANome ?? null,
     ordem: index,
   }));
   const { error: errRespostas } = await supabase.from('respostas').insert(respostasRows);
   if (errRespostas) throw new Error(errRespostas.message);
+
+  await notificarEnvolvidos(payload);
+}
+
+async function notificarEnvolvidos(payload: ChecklistPayload): Promise<void> {
+  try {
+    const { data: pessoas, error } = await supabase.from('pessoas').select('id, push_token');
+    if (error || !pessoas) return;
+
+    const tokenPorPessoa = new Map<string, string | null>(pessoas.map((p: any) => [p.id, p.push_token]));
+
+    const notificacoes: Parameters<typeof criarNotificacoes>[0] = [];
+    const pushes: Parameters<typeof enviarPushEmMassa>[0] = [];
+
+    const tarefasAtribuidas = payload.respostas.filter((r) => r.resposta === 'Não' && r.atribuidoAId);
+    for (const tarefa of tarefasAtribuidas) {
+      notificacoes.push({
+        destinatarioId: tarefa.atribuidoAId!,
+        tipo: 'tarefa',
+        titulo: 'Nova tarefa atribuída',
+        mensagem: `${payload.responsavel} marcou "Não" em "${tarefa.pergunta}" e atribuiu essa tarefa a você.`,
+        checklistId: payload.checklistId,
+        perguntaId: tarefa.perguntaId,
+      });
+      const token = tokenPorPessoa.get(tarefa.atribuidoAId!);
+      if (token) {
+        pushes.push({
+          pushToken: token,
+          titulo: 'Nova tarefa atribuída',
+          mensagem: `${payload.responsavel} atribuiu uma tarefa a você: "${tarefa.pergunta}"`,
+          data: { checklistId: payload.checklistId },
+        });
+      }
+    }
+
+    for (const [pessoaId, token] of tokenPorPessoa) {
+      if (pessoaId === payload.responsavelId) continue;
+      notificacoes.push({
+        destinatarioId: pessoaId,
+        tipo: 'checklist_finalizado',
+        titulo: 'Checklist finalizado',
+        mensagem: `${payload.responsavel} finalizou o checklist de ${payload.data} (${payload.turno}).`,
+        checklistId: payload.checklistId,
+      });
+      if (token) {
+        pushes.push({
+          pushToken: token,
+          titulo: 'Checklist finalizado',
+          mensagem: `${payload.responsavel} finalizou o checklist de ${payload.data} (${payload.turno}).`,
+          data: { checklistId: payload.checklistId },
+        });
+      }
+    }
+
+    await criarNotificacoes(notificacoes);
+    await enviarPushEmMassa(pushes);
+  } catch {
+    // notificações não devem impedir o checklist de ser salvo com sucesso
+  }
 }
 
 export async function listChecklists(): Promise<ChecklistRegistro[]> {

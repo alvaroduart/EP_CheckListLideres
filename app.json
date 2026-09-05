@@ -12,6 +12,7 @@
     },
     "android": {
       "package": "com.electroplastic.checklist",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -41,6 +42,13 @@
         "expo-image-picker",
         {
           "cameraPermission": "O aplicativo usa a câmera para anexar fotos às perguntas do checklist."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon-mark-white.png",
+          "color": "#20265B"
         }
       ]
     ],

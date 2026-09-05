@@ -10,9 +10,18 @@ interface HeaderProps {
   subtitle?: string;
   badge?: string;
   onSettingsPress?: () => void;
+  onNotificationsPress?: () => void;
+  unreadCount?: number;
 }
 
-export default function Header({ title, subtitle, badge, onSettingsPress }: HeaderProps) {
+export default function Header({
+  title,
+  subtitle,
+  badge,
+  onSettingsPress,
+  onNotificationsPress,
+  unreadCount = 0,
+}: HeaderProps) {
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.wrapper, { paddingTop: insets.top }]}>
@@ -46,6 +55,21 @@ export default function Header({ title, subtitle, badge, onSettingsPress }: Head
             ) : null}
           </View>
         </View>
+        {onNotificationsPress ? (
+          <Pressable
+            onPress={onNotificationsPress}
+            accessibilityRole="button"
+            accessibilityLabel="Notificações"
+            style={({ pressed }) => [styles.settingsButton, pressed && styles.settingsButtonPressed]}
+          >
+            <Ionicons name="notifications-outline" size={22} color={colors.primary} />
+            {unreadCount > 0 ? (
+              <View style={styles.notifBadge}>
+                <Text style={styles.notifBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+              </View>
+            ) : null}
+          </Pressable>
+        ) : null}
         {onSettingsPress ? (
           <Pressable
             onPress={onSettingsPress}
@@ -124,5 +148,24 @@ const styles = StyleSheet.create({
   },
   settingsButtonPressed: {
     opacity: 0.7,
+  },
+  notifBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: colors.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: colors.background,
+  },
+  notifBadgeText: {
+    color: colors.textInverse,
+    fontSize: 9,
+    fontWeight: '800',
   },
 });

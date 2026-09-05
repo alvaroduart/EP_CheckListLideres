@@ -43,6 +43,36 @@ create table if not exists respostas (
   ordem integer not null default 0
 );
 
+alter table respostas add column if not exists comentario text;
+alter table respostas add column if not exists atribuido_a_id text;
+alter table respostas add column if not exists atribuido_a_nome text;
+
+create table if not exists setores (
+  id text primary key,
+  nome text not null unique,
+  ordem integer not null
+);
+
+create table if not exists pessoas (
+  id text primary key,
+  nome text not null,
+  setor_id text not null references setores(id) on delete restrict,
+  push_token text,
+  criado_em timestamptz not null default now()
+);
+
+create table if not exists notificacoes (
+  id text primary key,
+  destinatario_id text not null references pessoas(id) on delete cascade,
+  tipo text not null,
+  titulo text not null,
+  mensagem text not null,
+  checklist_id text,
+  pergunta_id text,
+  lida boolean not null default false,
+  criado_em timestamptz not null default now()
+);
+
 -- View com o resumo de cada checklist (usada na tela de Histórico)
 create or replace view checklist_resumo as
 select
@@ -72,6 +102,9 @@ alter table categorias enable row level security;
 alter table perguntas enable row level security;
 alter table checklists enable row level security;
 alter table respostas enable row level security;
+alter table setores enable row level security;
+alter table pessoas enable row level security;
+alter table notificacoes enable row level security;
 
 drop policy if exists "allow all" on categorias;
 create policy "allow all" on categorias for all using (true) with check (true);
@@ -84,6 +117,15 @@ create policy "allow all" on checklists for all using (true) with check (true);
 
 drop policy if exists "allow all" on respostas;
 create policy "allow all" on respostas for all using (true) with check (true);
+
+drop policy if exists "allow all" on setores;
+create policy "allow all" on setores for all using (true) with check (true);
+
+drop policy if exists "allow all" on pessoas;
+create policy "allow all" on pessoas for all using (true) with check (true);
+
+drop policy if exists "allow all" on notificacoes;
+create policy "allow all" on notificacoes for all using (true) with check (true);
 
 -- ============================================================
 -- ARMAZENAMENTO DE FOTOS

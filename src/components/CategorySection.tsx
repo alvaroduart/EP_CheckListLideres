@@ -2,16 +2,24 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, LayoutAnimation, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, shadow, spacing, typography } from '../theme/theme';
-import { Categoria, Questao, RespostaValor } from '../types';
+import { Categoria, Pessoa, Questao, RespostaDetalhe, RespostaValor } from '../types';
 import ChecklistItemRow from './ChecklistItemRow';
+
+const DETALHE_VAZIO: RespostaDetalhe = {
+  comentario: '',
+  fotoUri: null,
+  atribuidoAId: null,
+  atribuidoANome: null,
+};
 
 interface CategorySectionProps {
   categoria: Categoria;
   perguntas: Questao[];
   respostas: Record<string, RespostaValor>;
   onChangeResposta: (perguntaId: string, valor: RespostaValor) => void;
-  fotos: Record<string, string | null>;
-  onChangeFoto: (perguntaId: string, uri: string | null) => void;
+  detalhes: Record<string, RespostaDetalhe>;
+  onChangeDetalhe: (perguntaId: string, patch: Partial<RespostaDetalhe>) => void;
+  pessoas: Pessoa[];
   defaultExpanded?: boolean;
 }
 
@@ -20,8 +28,9 @@ export default function CategorySection({
   perguntas,
   respostas,
   onChangeResposta,
-  fotos,
-  onChangeFoto,
+  detalhes,
+  onChangeDetalhe,
+  pessoas,
   defaultExpanded = true,
 }: CategorySectionProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
@@ -77,8 +86,9 @@ export default function CategorySection({
               pergunta={questao.pergunta}
               valor={respostas[questao.id]}
               onChange={(valor) => onChangeResposta(questao.id, valor)}
-              fotoUri={fotos[questao.id]}
-              onChangeFoto={(uri) => onChangeFoto(questao.id, uri)}
+              detalhe={detalhes[questao.id] ?? DETALHE_VAZIO}
+              onChangeDetalhe={(patch) => onChangeDetalhe(questao.id, patch)}
+              pessoas={pessoas}
             />
           ))}
         </View>

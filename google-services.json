@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "96867073970",
+    "project_id": "epchecklistlideranca",
+    "storage_bucket": "epchecklistlideranca.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:96867073970:android:a2e7be725179da0e4d2eab",
+        "android_client_info": {
+          "package_name": "com.electroplastic.checklist"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3JpCO0jTm8c0-1cOj7JSBTqFIEtJ6qsQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
