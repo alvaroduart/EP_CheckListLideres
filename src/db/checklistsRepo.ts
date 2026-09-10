@@ -71,24 +71,47 @@ async function notificarEnvolvidos(payload: ChecklistPayload): Promise<void> {
     const notificacoes: Parameters<typeof criarNotificacoes>[0] = [];
     const pushes: Parameters<typeof enviarPushEmMassa>[0] = [];
 
-    const tarefasAtribuidas = payload.respostas.filter((r) => r.resposta === 'Não' && r.atribuidoAId);
-    for (const tarefa of tarefasAtribuidas) {
-      notificacoes.push({
-        destinatarioId: tarefa.atribuidoAId!,
-        tipo: 'tarefa',
-        titulo: 'Nova tarefa atribuída',
-        mensagem: `${payload.responsavel} marcou "Não" em "${tarefa.pergunta}" e atribuiu essa tarefa a você.`,
-        checklistId: payload.checklistId,
-        perguntaId: tarefa.perguntaId,
-      });
-      const token = tokenPorPessoa.get(tarefa.atribuidoAId!);
-      if (token) {
-        pushes.push({
-          pushToken: token,
+    const itensAtribuidos = payload.respostas.filter((r) => r.resposta === 'Não' && r.atribuidoAId);
+    if (itensAtribuidos.length > 0) {
+      const tarefasRows = itensAtribuidos.map((item) => ({
+        id: generateId('T'),
+        checklist_id: payload.checklistId,
+        pergunta_id: item.perguntaId,
+        categoria: item.categoria,
+        pergunta_texto: item.pergunta,
+        comentario: item.comentario ?? null,
+        foto_uri: item.fotoUri ?? null,
+        atribuido_por_id: payload.responsavelId,
+        atribuido_por_nome: payload.responsavel,
+        atribuido_a_id: item.atribuidoAId,
+        atribuido_a_nome: item.atribuidoANome,
+        status: 'pendente',
+      }));
+      const { data: tarefasCriadas, error: errTarefas } = await supabase
+        .from('tarefas')
+        .insert(tarefasRows)
+        .select();
+      if (errTarefas) throw errTarefas;
+
+      for (const tarefa of tarefasCriadas ?? []) {
+        notificacoes.push({
+          destinatarioId: tarefa.atribuido_a_id,
+          tipo: 'tarefa',
           titulo: 'Nova tarefa atribuída',
-          mensagem: `${payload.responsavel} atribuiu uma tarefa a você: "${tarefa.pergunta}"`,
-          data: { checklistId: payload.checklistId },
+          mensagem: `${payload.responsavel} marcou "Não" em "${tarefa.pergunta_texto}" e atribuiu essa tarefa a você.`,
+          checklistId: payload.checklistId,
+          perguntaId: tarefa.pergunta_id,
+          tarefaId: tarefa.id,
         });
+        const token = tokenPorPessoa.get(tarefa.atribuido_a_id);
+        if (token) {
+          pushes.push({
+            pushToken: token,
+            titulo: 'Nova tarefa atribuída',
+            mensagem: `${payload.responsavel} atribuiu uma tarefa a você: "${tarefa.pergunta_texto}"`,
+            data: { tarefaId: tarefa.id },
+          });
+        }
       }
     }
 

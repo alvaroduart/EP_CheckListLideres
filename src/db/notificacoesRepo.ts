@@ -11,6 +11,7 @@ function mapRow(row: any): Notificacao {
     mensagem: row.mensagem,
     checklistId: row.checklist_id,
     perguntaId: row.pergunta_id,
+    tarefaId: row.tarefa_id,
     lida: row.lida,
     criadoEm: row.criado_em,
   };
@@ -57,6 +58,7 @@ interface CriarNotificacaoInput {
   mensagem: string;
   checklistId?: string;
   perguntaId?: string;
+  tarefaId?: string;
 }
 
 export async function criarNotificacoes(itens: CriarNotificacaoInput[]): Promise<void> {
@@ -69,6 +71,7 @@ export async function criarNotificacoes(itens: CriarNotificacaoInput[]): Promise
     mensagem: item.mensagem,
     checklist_id: item.checklistId ?? null,
     pergunta_id: item.perguntaId ?? null,
+    tarefa_id: item.tarefaId ?? null,
   }));
   const { error } = await supabase.from('notificacoes').insert(rows);
   if (error) throw new Error(error.message);

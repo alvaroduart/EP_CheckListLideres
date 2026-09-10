@@ -12,7 +12,7 @@ export default function App() {
 
   useEffect(() => {
     getPessoaCache().then((pessoa) => {
-      setInitialRouteName(pessoa ? 'Checklist' : 'Cadastro');
+      setInitialRouteName(pessoa ? 'Checklist' : 'SelecionarUsuario');
     });
   }, []);
 

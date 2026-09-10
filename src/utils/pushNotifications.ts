@@ -19,10 +19,12 @@ try {
 /**
  * Notificações push remotas (getExpoPushTokenAsync) não são suportadas dentro
  * do Expo Go no Android desde o SDK 53 — só funcionam num build de verdade
- * (APK gerado via EAS Build). Fora desse ambiente, nem tentamos.
+ * (APK gerado via EAS Build). Builds da EAS reportam "bare" (a distinção
+ * managed/standalone não existe mais), então o único ambiente a evitar é o
+ * próprio Expo Go ("storeClient").
  */
 function suportaPushRemoto(): boolean {
-  return Constants.executionEnvironment === ExecutionEnvironment.Standalone;
+  return Constants.executionEnvironment !== ExecutionEnvironment.StoreClient;
 }
 
 export async function registrarPushToken(): Promise<string | null> {

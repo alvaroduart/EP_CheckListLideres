@@ -8,8 +8,8 @@ pessoa que abrir o app em qualquer celular vê as mesmas informações.
 ## Estrutura
 
 ```
-App.tsx                              ponto de entrada — verifica se já existe cadastro no
-                                      aparelho e decide a tela inicial (Cadastro ou Checklist)
+App.tsx                              ponto de entrada — verifica se já existe uma pessoa
+                                      selecionada no aparelho e decide a tela inicial
 index.ts                             registra o app + polyfill de URL (necessário p/ Supabase)
 eas.json                             perfis de build (gera APK via EAS Build)
 supabase/schema.sql                  script para criar/atualizar as tabelas e políticas no Supabase
@@ -17,6 +17,8 @@ src/
   components/                        componentes de UI reutilizáveis
     AdminCategoriasTab.tsx           aba de gerenciamento de categorias (admin)
     AdminSetoresTab.tsx              aba de gerenciamento de setores (admin)
+    AdminPessoasTab.tsx              aba de gerenciamento de pessoas/líderes (admin)
+    AdminTarefasTab.tsx              aba com todas as tarefas atribuídas (admin)
     AdminHistoricoTab.tsx            aba de histórico visual dos checklists (admin)
     PhotoCapture.tsx                 botão de anexar/tirar foto (perguntas respondidas "Não")
     SelectField.tsx                  campo de seleção em lista (modal)
@@ -27,19 +29,22 @@ src/
     categoriasRepo.ts                CRUD de categorias
     questoesRepo.ts                  CRUD de perguntas
     setoresRepo.ts                   CRUD de setores
-    pessoasRepo.ts                   cadastro de pessoas (líderes) e push token
+    pessoasRepo.ts                   CRUD de pessoas (líderes) e push token
+    tarefasRepo.ts                   ciclo de vida das tarefas (status, prazo, notificação)
     notificacoesRepo.ts              central de notificações dentro do app
     checklistsRepo.ts                salvar checklist, ler o histórico e notificar envolvidos
   navigation/RootNavigator.tsx      Stack Navigator
   screens/
-    CadastroScreen.tsx               cadastro inicial (nome + setor) no primeiro uso do aparelho
+    SelecionarUsuarioScreen.tsx      tela inicial — escolher quem é você (lista do admin)
     ChecklistScreen.tsx              tela do líder (preenchimento do checklist)
     NotificacoesScreen.tsx           central de notificações do usuário logado no aparelho
+    TarefaDetalheScreen.tsx          detalhe da tarefa — status e prazo (quem recebeu a tarefa)
     AdminLoginScreen.tsx             senha de acesso à administração
-    AdminScreen.tsx                  abas: Perguntas / Categorias / Setores / Histórico
+    AdminScreen.tsx                  abas: Perguntas / Categorias / Setores / Pessoas / Tarefas / Histórico
     AdminQuestionFormScreen.tsx      formulário de criar/editar pergunta
     AdminCategoryFormScreen.tsx      formulário de criar/editar categoria
     AdminSetorFormScreen.tsx         formulário de criar/editar setor
+    AdminPessoaFormScreen.tsx        formulário de criar/editar pessoa
   theme/theme.ts                     cores, espaçamentos, tipografia e paleta de categorias
   types.ts                           tipos compartilhados
   utils/
@@ -54,15 +59,17 @@ src/
 2. No painel do projeto, abra **SQL Editor → New query**, cole todo o conteúdo de
    [`supabase/schema.sql`](supabase/schema.sql) deste repositório e clique em **Run**.
    > Se você já rodou uma versão anterior deste script, **rode de novo** — ele foi atualizado
-   > com as tabelas de `setores`, `pessoas` e `notificacoes`, além de novas colunas em
-   > `respostas` (`comentario`, `atribuido_a_id`, `atribuido_a_nome`). É seguro rodar de novo:
-   > tudo usa `if not exists`/`drop policy if exists`, e os dados que já existem não são
-   > apagados nem duplicados.
+   > com as tabelas de `setores`, `pessoas`, `tarefas` e `notificacoes`, além de novas colunas
+   > em `respostas` e `notificacoes`. É seguro rodar de novo: tudo usa
+   > `if not exists`/`drop policy if exists`, e os dados que já existem não são apagados nem
+   > duplicados.
 3. Vá em **Project Settings → API** e copie a **Project URL** e a **anon / public key** (ou a
    chave nova no formato `sb_publishable_...`, funciona do mesmo jeito) para
    [`src/config/supabase.ts`](src/config/supabase.ts).
-4. **Cadastre pelo menos um setor** antes de qualquer líder tentar se cadastrar: entre no app
-   como administrador (⚙️ no cabeçalho → senha) → aba **Setores** → **+ Novo Setor**.
+4. Entre no app como administrador (⚙️ no cabeçalho → senha) e cadastre, nessa ordem:
+   1. Pelo menos um **Setor** (aba Setores → + Novo Setor).
+   2. As **Pessoas** que vão usar o app (aba Pessoas → + Nova Pessoa, escolhendo o setor de
+      cada uma). Só o administrador cadastra pessoas — ninguém mais cria seu próprio usuário.
 
 ## 2. Rodar o app
 
@@ -128,26 +135,36 @@ de todas as telas (`assets/logo-full.png`), ícone do app, favicon e splash scre
 
 ## Fluxo de telas
 
-- **Cadastro** (primeira vez que o app abre naquele aparelho): nome + setor (setor é escolhido
-  de uma lista cadastrada pelo administrador). Depois disso, o nome fica salvo naquele
-  aparelho — não precisa digitar de novo. Há um link **Trocar** na tela de Checklist para
-  registrar outra pessoa no mesmo aparelho, se necessário.
+- **Selecionar Usuário** (primeira vez que o app abre naquele aparelho): lista de pessoas já
+  cadastradas pelo administrador — toca no seu nome e pronto, sem digitar nada. Depois disso, a
+  escolha fica salva naquele aparelho — não pergunta de novo. Há um link **Trocar** na tela de
+  Checklist para selecionar outra pessoa no mesmo aparelho, se necessário. Ninguém consegue
+  criar um usuário novo por conta própria; só o administrador faz isso (aba Pessoas).
 - **Checklist**: identificação (nome/setor preenchidos automaticamente), Data, Turno, os itens
   por categoria e observações gerais. Quando uma pergunta é marcada como **Não**, abre um
   bloco extra para: comentário específico daquela pergunta, anexar foto e **atribuir a tarefa**
-  a outro líder já cadastrado. O botão **Salvar Checklist** valida que todas as perguntas foram
+  a outra pessoa já cadastrada. O botão **Salvar Checklist** valida que todas as perguntas foram
   respondidas antes de gravar. Ao salvar: quem foi atribuído numa tarefa recebe uma notificação
-  de tarefa, e todos os outros líderes cadastrados recebem uma notificação de que o checklist
+  de tarefa, e todas as outras pessoas cadastradas recebem uma notificação de que o checklist
   foi finalizado.
-- **Notificações** (sino no cabeçalho, com contador de não lidas): lista de tarefas atribuídas e
-  avisos de checklists finalizados, mais recente primeiro.
-- **Administração** (ícone de engrenagem no cabeçalho, protegido por senha) tem quatro abas:
+- **Notificações** (sino no cabeçalho, com contador de não lidas): tocar numa notificação de
+  **tarefa** abre o detalhe da tarefa; as demais (tarefa atualizada, checklist finalizado) são só
+  avisos.
+- **Detalhe da Tarefa** (quem recebeu a tarefa): mostra a pergunta, o comentário e a foto de
+  quem atribuiu. A pessoa define o **status** (Pendente / Em andamento / Concluída) e uma
+  **previsão de conclusão**; ao salvar, quem atribuiu a tarefa recebe uma notificação da
+  atualização.
+- **Administração** (ícone de engrenagem no cabeçalho, protegido por senha) tem seis abas:
   - **Perguntas**: lista por categoria com **Editar**, **Ativar/Inativar** e **Excluir**, e
     **+ Nova Pergunta**.
   - **Categorias**: ícone e cor próprios; **+ Nova Categoria** cria categorias além das 3
     padrão. Só pode ser excluída se não tiver perguntas vinculadas.
-  - **Setores**: **+ Novo Setor** — usados no cadastro dos líderes. Só pode ser excluído se não
+  - **Setores**: **+ Novo Setor** — usados no cadastro das pessoas. Só pode ser excluído se não
     tiver pessoas vinculadas.
+  - **Pessoas**: **+ Nova Pessoa** — nome + setor. É aqui que se cadastra quem vai usar o app
+    (líderes selecionam a partir dessa lista, não criam a própria conta).
+  - **Tarefas**: todas as tarefas atribuídas (abertas primeiro), com status, prazo, quem
+    atribuiu/recebeu, comentário e foto — visão geral para o administrador acompanhar pendências.
   - **Histórico**: todos os checklists já enviados (mais recente primeiro), com resumo
     Sim/Não/fotos. Tocar expande o detalhe completo — categoria, pergunta, resposta, comentário,
     a quem foi atribuído e a foto anexada (se houver) — com opção de excluir o registro.

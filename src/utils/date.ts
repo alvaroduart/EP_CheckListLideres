@@ -11,3 +11,8 @@ export function formatDateISO(date: Date): string {
   const yyyy = date.getFullYear();
   return `${yyyy}-${mm}-${dd}`;
 }
+
+export function parseDateISO(iso: string): Date {
+  const [yyyy, mm, dd] = iso.split('-').map(Number);
+  return new Date(yyyy, (mm || 1) - 1, dd || 1);
+}

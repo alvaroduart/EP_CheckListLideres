@@ -80,7 +80,27 @@ export interface ChecklistDetalhe extends ChecklistRegistro {
   respostas: RespostaChecklist[];
 }
 
-export type NotificacaoTipo = 'tarefa' | 'checklist_finalizado';
+export type TarefaStatus = 'pendente' | 'em_andamento' | 'concluida';
+
+export interface Tarefa {
+  id: string;
+  checklistId: string | null;
+  perguntaId: string | null;
+  categoria: string | null;
+  perguntaTexto: string | null;
+  comentario: string | null;
+  fotoUri: string | null;
+  atribuidoPorId: string;
+  atribuidoPorNome: string;
+  atribuidoAId: string;
+  atribuidoANome: string;
+  status: TarefaStatus;
+  dataConclusaoPrevista: string | null;
+  criadoEm: string;
+  atualizadoEm: string;
+}
+
+export type NotificacaoTipo = 'tarefa' | 'tarefa_atualizada' | 'checklist_finalizado';
 
 export interface Notificacao {
   id: string;
@@ -90,17 +110,20 @@ export interface Notificacao {
   mensagem: string;
   checklistId?: string | null;
   perguntaId?: string | null;
+  tarefaId?: string | null;
   lida: boolean;
   criadoEm: string;
 }
 
 export type RootStackParamList = {
-  Cadastro: undefined;
+  SelecionarUsuario: undefined;
   Checklist: undefined;
   Notificacoes: undefined;
+  TarefaDetalhe: { tarefaId: string };
   AdminLogin: undefined;
   Admin: undefined;
   AdminQuestionForm: { questao?: Questao } | undefined;
   AdminCategoryForm: { categoria?: Categoria } | undefined;
   AdminSetorForm: { setor?: Setor } | undefined;
+  AdminPessoaForm: { pessoa?: Pessoa } | undefined;
 };

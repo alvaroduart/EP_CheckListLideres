@@ -61,6 +61,24 @@ create table if not exists pessoas (
   criado_em timestamptz not null default now()
 );
 
+create table if not exists tarefas (
+  id text primary key,
+  checklist_id text references checklists(id) on delete set null,
+  pergunta_id text,
+  categoria text,
+  pergunta_texto text,
+  comentario text,
+  foto_uri text,
+  atribuido_por_id text not null references pessoas(id) on delete cascade,
+  atribuido_por_nome text not null,
+  atribuido_a_id text not null references pessoas(id) on delete cascade,
+  atribuido_a_nome text not null,
+  status text not null default 'pendente',
+  data_conclusao_prevista text,
+  criado_em timestamptz not null default now(),
+  atualizado_em timestamptz not null default now()
+);
+
 create table if not exists notificacoes (
   id text primary key,
   destinatario_id text not null references pessoas(id) on delete cascade,
@@ -72,6 +90,10 @@ create table if not exists notificacoes (
   lida boolean not null default false,
   criado_em timestamptz not null default now()
 );
+
+-- Coluna nova: só é adicionada de fato se a tabela já existia sem ela
+-- (o "create table if not exists" acima não altera tabelas já existentes).
+alter table notificacoes add column if not exists tarefa_id text references tarefas(id) on delete cascade;
 
 -- View com o resumo de cada checklist (usada na tela de Histórico)
 create or replace view checklist_resumo as
@@ -104,6 +126,7 @@ alter table checklists enable row level security;
 alter table respostas enable row level security;
 alter table setores enable row level security;
 alter table pessoas enable row level security;
+alter table tarefas enable row level security;
 alter table notificacoes enable row level security;
 
 drop policy if exists "allow all" on categorias;
@@ -123,6 +146,9 @@ create policy "allow all" on setores for all using (true) with check (true);
 
 drop policy if exists "allow all" on pessoas;
 create policy "allow all" on pessoas for all using (true) with check (true);
+
+drop policy if exists "allow all" on tarefas;
+create policy "allow all" on tarefas for all using (true) with check (true);
 
 drop policy if exists "allow all" on notificacoes;
 create policy "allow all" on notificacoes for all using (true) with check (true);

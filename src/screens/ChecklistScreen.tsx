@@ -69,7 +69,7 @@ export default function ChecklistScreen({ navigation }: Props) {
     try {
       const pessoa = await getPessoaCache();
       if (!pessoa) {
-        navigation.reset({ index: 0, routes: [{ name: 'Cadastro' }] });
+        navigation.reset({ index: 0, routes: [{ name: 'SelecionarUsuario' }] });
         return;
       }
       setPessoaId(pessoa.id);
@@ -162,14 +162,14 @@ export default function ChecklistScreen({ navigation }: Props) {
   };
 
   const handleTrocarUsuario = () => {
-    Alert.alert('Trocar usuário', 'Deseja sair e fazer um novo cadastro neste aparelho?', [
+    Alert.alert('Trocar usuário', 'Deseja sair e selecionar outra pessoa neste aparelho?', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Sair',
         style: 'destructive',
         onPress: async () => {
           await clearPessoaCache();
-          navigation.reset({ index: 0, routes: [{ name: 'Cadastro' }] });
+          navigation.reset({ index: 0, routes: [{ name: 'SelecionarUsuario' }] });
         },
       },
     ]);

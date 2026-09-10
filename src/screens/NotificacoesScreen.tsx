@@ -18,10 +18,16 @@ import {
   marcarTodasComoLidas,
 } from '../db/notificacoesRepo';
 import { colors, radius, shadow, spacing, typography } from '../theme/theme';
-import { Notificacao, RootStackParamList } from '../types';
+import { Notificacao, NotificacaoTipo, RootStackParamList } from '../types';
 import { getPessoaCache } from '../utils/pessoaCache';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Notificacoes'>;
+
+const NOTIF_STYLE: Record<NotificacaoTipo, { cor: string; corFundo: string; icone: keyof typeof Ionicons.glyphMap }> = {
+  tarefa: { cor: colors.danger, corFundo: colors.dangerBg, icone: 'alert-circle-outline' },
+  tarefa_atualizada: { cor: colors.primary, corFundo: colors.card, icone: 'sync-outline' },
+  checklist_finalizado: { cor: colors.success, corFundo: colors.successBg, icone: 'checkmark-done-outline' },
+};
 
 function formatarDataHora(iso: string): string {
   const d = new Date(iso);
@@ -66,14 +72,15 @@ export default function NotificacoesScreen({ navigation }: Props) {
   }, [carregar]);
 
   const handleTocar = async (notificacao: Notificacao) => {
-    if (notificacao.lida) return;
-    setNotificacoes((prev) =>
-      prev.map((n) => (n.id === notificacao.id ? { ...n, lida: true } : n))
-    );
-    try {
-      await marcarComoLida(notificacao.id);
-    } catch {
-      // ignore
+    if (!notificacao.lida) {
+      setNotificacoes((prev) =>
+        prev.map((n) => (n.id === notificacao.id ? { ...n, lida: true } : n))
+      );
+      marcarComoLida(notificacao.id).catch(() => {});
+    }
+
+    if (notificacao.tipo === 'tarefa' && notificacao.tarefaId) {
+      navigation.navigate('TarefaDetalhe', { tarefaId: notificacao.tarefaId });
     }
   };
 
@@ -131,19 +138,11 @@ export default function NotificacoesScreen({ navigation }: Props) {
                 pressed && styles.cardPressed,
               ]}
             >
-              <View
-                style={[
-                  styles.iconBadge,
-                  {
-                    backgroundColor:
-                      notificacao.tipo === 'tarefa' ? colors.dangerBg : colors.successBg,
-                  },
-                ]}
-              >
+              <View style={[styles.iconBadge, { backgroundColor: NOTIF_STYLE[notificacao.tipo].corFundo }]}>
                 <Ionicons
-                  name={notificacao.tipo === 'tarefa' ? 'alert-circle-outline' : 'checkmark-done-outline'}
+                  name={NOTIF_STYLE[notificacao.tipo].icone}
                   size={18}
-                  color={notificacao.tipo === 'tarefa' ? colors.danger : colors.success}
+                  color={NOTIF_STYLE[notificacao.tipo].cor}
                 />
               </View>
               <View style={styles.cardText}>

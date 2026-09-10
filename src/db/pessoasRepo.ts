@@ -40,6 +40,27 @@ export async function criarPessoa(nome: string, setorId: string): Promise<Pessoa
   return { id, nome: nomeTrim, setorId, setorNome: setor.nome, pushToken: null };
 }
 
+export async function atualizarPessoa(id: string, nome: string, setorId: string): Promise<Pessoa> {
+  const nomeTrim = nome.trim();
+  if (!nomeTrim) throw new Error('Informe o nome.');
+  if (!setorId) throw new Error('Selecione o setor.');
+
+  const { error } = await supabase
+    .from('pessoas')
+    .update({ nome: nomeTrim, setor_id: setorId })
+    .eq('id', id);
+  if (error) throw new Error(error.message);
+
+  const { data, error: errFetch } = await supabase.from('pessoas').select(SELECT).eq('id', id).single();
+  if (errFetch) throw new Error(errFetch.message);
+  return mapRow(data);
+}
+
+export async function excluirPessoa(id: string): Promise<void> {
+  const { error } = await supabase.from('pessoas').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
 export async function atualizarPushToken(pessoaId: string, pushToken: string): Promise<void> {
   const { error } = await supabase.from('pessoas').update({ push_token: pushToken }).eq('id', pessoaId);
   if (error) throw new Error(error.message);
