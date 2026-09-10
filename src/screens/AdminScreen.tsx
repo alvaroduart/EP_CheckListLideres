@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import AdminCategoriasTab from '../components/AdminCategoriasTab';
 import AdminHistoricoTab from '../components/AdminHistoricoTab';
+import AdminMetricasTab from '../components/AdminMetricasTab';
 import AdminPessoasTab from '../components/AdminPessoasTab';
 import AdminSetoresTab from '../components/AdminSetoresTab';
 import AdminTarefasTab from '../components/AdminTarefasTab';
@@ -26,7 +27,7 @@ import { colors, radius, shadow, spacing, typography } from '../theme/theme';
 import { Categoria, Pessoa, Questao, RootStackParamList, Setor, Tarefa } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Admin'>;
-type Aba = 'perguntas' | 'categorias' | 'setores' | 'pessoas' | 'tarefas' | 'historico';
+type Aba = 'perguntas' | 'categorias' | 'setores' | 'pessoas' | 'tarefas' | 'historico' | 'metricas';
 
 export default function AdminScreen({ navigation }: Props) {
   const [aba, setAba] = useState<Aba>('perguntas');
@@ -161,6 +162,7 @@ export default function AdminScreen({ navigation }: Props) {
           <TabButton label="Pessoas" icon="people-outline" active={aba === 'pessoas'} onPress={() => setAba('pessoas')} />
           <TabButton label="Tarefas" icon="clipboard-outline" active={aba === 'tarefas'} onPress={() => setAba('tarefas')} />
           <TabButton label="Histórico" icon="time-outline" active={aba === 'historico'} onPress={() => setAba('historico')} />
+          <TabButton label="Métricas" icon="stats-chart-outline" active={aba === 'metricas'} onPress={() => setAba('metricas')} />
         </ScrollView>
         <Button label="Sair" variant="text" icon="log-out-outline" onPress={handleLogout} style={styles.logoutButton} />
       </View>
@@ -293,8 +295,10 @@ export default function AdminScreen({ navigation }: Props) {
           <AdminTarefasTab tarefas={tarefas} onChanged={carregar} />
           <View style={styles.scrollSpacer} />
         </ScrollView>
-      ) : (
+      ) : aba === 'historico' ? (
         <AdminHistoricoTab />
+      ) : (
+        <AdminMetricasTab />
       )}
 
       {aba === 'perguntas' && (

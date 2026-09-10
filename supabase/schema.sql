@@ -61,6 +61,10 @@ create table if not exists pessoas (
   criado_em timestamptz not null default now()
 );
 
+-- Vínculo do checklist com quem respondeu (necessário para métricas por setor).
+-- "on delete set null" preserva o histórico do checklist mesmo se a pessoa for excluída depois.
+alter table checklists add column if not exists responsavel_id text references pessoas(id) on delete set null;
+
 create table if not exists tarefas (
   id text primary key,
   checklist_id text references checklists(id) on delete set null,
@@ -113,6 +117,61 @@ left join respostas r on r.checklist_id = ch.id
 group by ch.id;
 
 grant select on checklist_resumo to anon, authenticated;
+
+-- ============================================================
+-- MÉTRICAS (usadas na aba Métricas do admin)
+-- ============================================================
+
+create or replace view metricas_globais as
+select
+  count(distinct checklist_id) as total_checklists,
+  count(*) as total_respostas,
+  count(*) filter (where resposta = 'Sim') as total_sim,
+  count(*) filter (where resposta = 'Não') as total_nao
+from respostas;
+
+grant select on metricas_globais to anon, authenticated;
+
+create or replace view metricas_categoria as
+select
+  categoria as categoria_nome,
+  count(*) as total,
+  count(*) filter (where resposta = 'Sim') as total_sim,
+  count(*) filter (where resposta = 'Não') as total_nao
+from respostas
+group by categoria;
+
+grant select on metricas_categoria to anon, authenticated;
+
+-- Só considera checklists enviados depois que "responsavel_id" passou a ser
+-- gravado; checklists antigos (sem responsavel_id) não entram nesse recorte.
+create or replace view metricas_setor as
+select
+  s.id as setor_id,
+  s.nome as setor_nome,
+  count(r.id) as total,
+  count(*) filter (where r.resposta = 'Sim') as total_sim,
+  count(*) filter (where r.resposta = 'Não') as total_nao
+from respostas r
+join checklists c on c.id = r.checklist_id
+join pessoas p on p.id = c.responsavel_id
+join setores s on s.id = p.setor_id
+group by s.id, s.nome;
+
+grant select on metricas_setor to anon, authenticated;
+
+create or replace view metricas_pergunta as
+select
+  pergunta_id,
+  pergunta_texto,
+  categoria,
+  count(*) as total,
+  count(*) filter (where resposta = 'Sim') as total_sim,
+  count(*) filter (where resposta = 'Não') as total_nao
+from respostas
+group by pergunta_id, pergunta_texto, categoria;
+
+grant select on metricas_pergunta to anon, authenticated;
 
 -- ============================================================
 -- SEGURANÇA (Row Level Security)

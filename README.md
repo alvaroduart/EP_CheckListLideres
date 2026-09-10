@@ -20,6 +20,7 @@ src/
     AdminPessoasTab.tsx              aba de gerenciamento de pessoas/líderes (admin)
     AdminTarefasTab.tsx              aba com todas as tarefas atribuídas (admin)
     AdminHistoricoTab.tsx            aba de histórico visual dos checklists (admin)
+    AdminMetricasTab.tsx             aba de métricas/insights de conformidade (admin)
     PhotoCapture.tsx                 botão de anexar/tirar foto (perguntas respondidas "Não")
     SelectField.tsx                  campo de seleção em lista (modal)
   config/
@@ -33,6 +34,7 @@ src/
     tarefasRepo.ts                   ciclo de vida das tarefas (status, prazo, notificação)
     notificacoesRepo.ts              central de notificações dentro do app
     checklistsRepo.ts                salvar checklist, ler o histórico e notificar envolvidos
+    metricasRepo.ts                  totais e % de conformidade (global, categoria, setor, pergunta)
   navigation/RootNavigator.tsx      Stack Navigator
   screens/
     SelecionarUsuarioScreen.tsx      tela inicial — escolher quem é você (lista do admin)
@@ -40,7 +42,7 @@ src/
     NotificacoesScreen.tsx           central de notificações do usuário logado no aparelho
     TarefaDetalheScreen.tsx          detalhe da tarefa — status e prazo (quem recebeu a tarefa)
     AdminLoginScreen.tsx             senha de acesso à administração
-    AdminScreen.tsx                  abas: Perguntas / Categorias / Setores / Pessoas / Tarefas / Histórico
+    AdminScreen.tsx                  abas: Perguntas / Categorias / Setores / Pessoas / Tarefas / Histórico / Métricas
     AdminQuestionFormScreen.tsx      formulário de criar/editar pergunta
     AdminCategoryFormScreen.tsx      formulário de criar/editar categoria
     AdminSetorFormScreen.tsx         formulário de criar/editar setor
@@ -59,10 +61,11 @@ src/
 2. No painel do projeto, abra **SQL Editor → New query**, cole todo o conteúdo de
    [`supabase/schema.sql`](supabase/schema.sql) deste repositório e clique em **Run**.
    > Se você já rodou uma versão anterior deste script, **rode de novo** — ele foi atualizado
-   > com as tabelas de `setores`, `pessoas`, `tarefas` e `notificacoes`, além de novas colunas
-   > em `respostas` e `notificacoes`. É seguro rodar de novo: tudo usa
-   > `if not exists`/`drop policy if exists`, e os dados que já existem não são apagados nem
-   > duplicados.
+   > com as tabelas de `setores`, `pessoas`, `tarefas` e `notificacoes`, as views de métricas
+   > (`metricas_globais`, `metricas_categoria`, `metricas_setor`, `metricas_pergunta`), além de
+   > novas colunas em `respostas`, `checklists` e `notificacoes`. É seguro rodar de novo: tudo usa
+   > `if not exists`/`drop policy if exists`/`create or replace view`, e os dados que já existem
+   > não são apagados nem duplicados.
 3. Vá em **Project Settings → API** e copie a **Project URL** e a **anon / public key** (ou a
    chave nova no formato `sb_publishable_...`, funciona do mesmo jeito) para
    [`src/config/supabase.ts`](src/config/supabase.ts).
@@ -154,7 +157,7 @@ de todas as telas (`assets/logo-full.png`), ícone do app, favicon e splash scre
   quem atribuiu. A pessoa define o **status** (Pendente / Em andamento / Concluída) e uma
   **previsão de conclusão**; ao salvar, quem atribuiu a tarefa recebe uma notificação da
   atualização.
-- **Administração** (ícone de engrenagem no cabeçalho, protegido por senha) tem seis abas:
+- **Administração** (ícone de engrenagem no cabeçalho, protegido por senha) tem sete abas:
   - **Perguntas**: lista por categoria com **Editar**, **Ativar/Inativar** e **Excluir**, e
     **+ Nova Pergunta**.
   - **Categorias**: ícone e cor próprios; **+ Nova Categoria** cria categorias além das 3
@@ -168,6 +171,13 @@ de todas as telas (`assets/logo-full.png`), ícone do app, favicon e splash scre
   - **Histórico**: todos os checklists já enviados (mais recente primeiro), com resumo
     Sim/Não/fotos. Tocar expande o detalhe completo — categoria, pergunta, resposta, comentário,
     a quem foi atribuído e a foto anexada (se houver) — com opção de excluir o registro.
+  - **Métricas**: visão geral (total de checklists/respostas, Sim x Não) e % de conformidade
+    global, com o mesmo recorte por **categoria** (5'S, Segurança, NR12...) e por **setor**, além
+    de um ranking das perguntas com mais reprovação ("Não"). As barras ficam verdes (≥90%),
+    amarelas (70–89%) ou vermelhas (<70%) conforme a conformidade. O recorte por setor só
+    considera checklists enviados por alguém já vinculado a um setor — checklists enviados antes
+    dessa atualização não entram nessa parte (mas continuam contando nos totais globais e por
+    categoria).
 
 Como tudo fica no Supabase, qualquer alteração feita por uma pessoa aparece para as outras assim
 que elas abrirem ou atualizarem a tela — não precisa estar no mesmo aparelho.

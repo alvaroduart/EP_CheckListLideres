@@ -80,6 +80,37 @@ export interface ChecklistDetalhe extends ChecklistRegistro {
   respostas: RespostaChecklist[];
 }
 
+export interface MetricaGlobal {
+  totalChecklists: number;
+  totalRespostas: number;
+  totalSim: number;
+  totalNao: number;
+}
+
+export interface MetricaCategoria {
+  categoriaNome: string;
+  total: number;
+  totalSim: number;
+  totalNao: number;
+}
+
+export interface MetricaSetor {
+  setorId: string;
+  setorNome: string;
+  total: number;
+  totalSim: number;
+  totalNao: number;
+}
+
+export interface MetricaPergunta {
+  perguntaId: string;
+  perguntaTexto: string;
+  categoria: string;
+  total: number;
+  totalSim: number;
+  totalNao: number;
+}
+
 export type TarefaStatus = 'pendente' | 'em_andamento' | 'concluida';
 
 export interface Tarefa {

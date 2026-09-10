@@ -35,6 +35,7 @@ function mapResposta(row: any): RespostaChecklist {
 export async function salvarChecklist(payload: ChecklistPayload): Promise<void> {
   const { error: errChecklist } = await supabase.from('checklists').insert({
     id: payload.checklistId,
+    responsavel_id: payload.responsavelId,
     data: payload.data,
     responsavel: payload.responsavel,
     turno: payload.turno,
