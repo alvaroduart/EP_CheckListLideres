@@ -3,6 +3,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { excluirPessoa } from '../db/pessoasRepo';
+import { useIsWideWeb } from '../hooks/useResponsive';
 import { colors, radius, shadow, spacing, typography } from '../theme/theme';
 import { Pessoa, RootStackParamList } from '../types';
 import Button from './Button';
@@ -14,6 +15,7 @@ interface AdminPessoasTabProps {
 }
 
 export default function AdminPessoasTab({ pessoas, navigation, onChanged }: AdminPessoasTabProps) {
+  const isWideWeb = useIsWideWeb();
   const handleExcluir = (pessoa: Pessoa) => {
     Alert.alert('Excluir pessoa', `Tem certeza que deseja excluir "${pessoa.nome}"?`, [
       { text: 'Cancelar', style: 'cancel' },
@@ -33,7 +35,7 @@ export default function AdminPessoasTab({ pessoas, navigation, onChanged }: Admi
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isWideWeb && styles.containerWideWeb]}>
       <Button
         label="+ Nova Pessoa"
         onPress={() => navigation.navigate('AdminPessoaForm')}
@@ -44,26 +46,28 @@ export default function AdminPessoasTab({ pessoas, navigation, onChanged }: Admi
         <Text style={styles.emptyText}>Nenhuma pessoa cadastrada ainda.</Text>
       )}
 
-      {pessoas.map((pessoa) => (
-        <View key={pessoa.id} style={[styles.card, shadow.card]}>
-          <View style={styles.iconBadge}>
-            <Ionicons name="person-outline" size={20} color={colors.primary} />
+      <View style={[isWideWeb && styles.gridWide]}>
+        {pessoas.map((pessoa) => (
+          <View key={pessoa.id} style={[styles.card, shadow.card, isWideWeb && styles.cardWide]}>
+            <View style={styles.iconBadge}>
+              <Ionicons name="person-outline" size={20} color={colors.primary} />
+            </View>
+            <View style={styles.info}>
+              <Text style={styles.nome}>{pessoa.nome}</Text>
+              <Text style={styles.count}>{pessoa.setorNome}</Text>
+            </View>
+            <Pressable
+              style={styles.actionButton}
+              onPress={() => navigation.navigate('AdminPessoaForm', { pessoa })}
+            >
+              <Ionicons name="create-outline" size={18} color={colors.primary} />
+            </Pressable>
+            <Pressable style={styles.actionButton} onPress={() => handleExcluir(pessoa)}>
+              <Ionicons name="trash-outline" size={18} color={colors.danger} />
+            </Pressable>
           </View>
-          <View style={styles.info}>
-            <Text style={styles.nome}>{pessoa.nome}</Text>
-            <Text style={styles.count}>{pessoa.setorNome}</Text>
-          </View>
-          <Pressable
-            style={styles.actionButton}
-            onPress={() => navigation.navigate('AdminPessoaForm', { pessoa })}
-          >
-            <Ionicons name="create-outline" size={18} color={colors.primary} />
-          </Pressable>
-          <Pressable style={styles.actionButton} onPress={() => handleExcluir(pessoa)}>
-            <Ionicons name="trash-outline" size={18} color={colors.danger} />
-          </Pressable>
-        </View>
-      ))}
+        ))}
+      </View>
     </View>
   );
 }
@@ -72,6 +76,11 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
+  },
+  containerWideWeb: {
+    width: '100%',
+    maxWidth: 1120,
+    alignSelf: 'center',
   },
   newButton: {
     marginBottom: spacing.md,
@@ -82,6 +91,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing.xl,
   },
+  gridWide: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -89,6 +103,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: spacing.md,
     marginBottom: spacing.sm,
+  },
+  cardWide: {
+    width: '48.5%',
   },
   iconBadge: {
     width: 40,

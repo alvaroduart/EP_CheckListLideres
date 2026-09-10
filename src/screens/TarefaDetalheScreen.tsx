@@ -15,6 +15,7 @@ import Button from '../components/Button';
 import DatePickerField from '../components/DatePickerField';
 import Header from '../components/Header';
 import { atualizarTarefa, getTarefa, STATUS_LABEL } from '../db/tarefasRepo';
+import { useIsWideWeb } from '../hooks/useResponsive';
 import { colors, radius, shadow, spacing, typography } from '../theme/theme';
 import { RootStackParamList, Tarefa, TarefaStatus } from '../types';
 import { formatDateISO, parseDateISO } from '../utils/date';
@@ -24,6 +25,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'TarefaDetalhe'>;
 const STATUS_OPCOES: TarefaStatus[] = ['pendente', 'em_andamento', 'concluida'];
 
 export default function TarefaDetalheScreen({ navigation, route }: Props) {
+  const isWideWeb = useIsWideWeb();
   const { tarefaId } = route.params;
   const [tarefa, setTarefa] = useState<Tarefa | null>(null);
   const [loading, setLoading] = useState(true);
@@ -81,8 +83,8 @@ export default function TarefaDetalheScreen({ navigation, route }: Props) {
           <Button label="Voltar" variant="text" onPress={() => navigation.goBack()} />
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.content}>
-          <View style={[styles.card, shadow.card]}>
+        <ScrollView contentContainerStyle={[styles.content, isWideWeb && styles.contentWideWeb]}>
+          <View style={[styles.card, shadow.card, isWideWeb && styles.cardWideWeb]}>
             {tarefa.categoria ? <Text style={styles.categoria}>{tarefa.categoria}</Text> : null}
             <Text style={styles.pergunta}>{tarefa.perguntaTexto}</Text>
 
@@ -103,7 +105,7 @@ export default function TarefaDetalheScreen({ navigation, route }: Props) {
             </View>
           </View>
 
-          <View style={[styles.card, shadow.card, styles.formCard]}>
+          <View style={[styles.card, shadow.card, styles.formCard, isWideWeb && styles.cardWideWeb]}>
             <Text style={styles.sectionTitle}>Andamento</Text>
 
             <Text style={styles.label}>STATUS</Text>
@@ -167,10 +169,17 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     paddingBottom: spacing.xxl * 2,
   },
+  contentWideWeb: {
+    alignItems: 'center',
+  },
   card: {
     backgroundColor: colors.background,
     borderRadius: radius.lg,
     padding: spacing.lg,
+  },
+  cardWideWeb: {
+    width: '100%',
+    maxWidth: 640,
   },
   formCard: {
     marginTop: spacing.lg,

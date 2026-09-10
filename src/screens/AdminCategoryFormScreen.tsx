@@ -6,12 +6,14 @@ import Button from '../components/Button';
 import Header from '../components/Header';
 import TextField from '../components/TextField';
 import { atualizarCategoria, criarCategoria } from '../db/categoriasRepo';
+import { useIsWideWeb } from '../hooks/useResponsive';
 import { CATEGORY_ICON_CHOICES, colors, radius, shadow, spacing, typography } from '../theme/theme';
 import { CategoriaIcone, RootStackParamList } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AdminCategoryForm'>;
 
 export default function AdminCategoryFormScreen({ navigation, route }: Props) {
+  const isWideWeb = useIsWideWeb();
   const categoriaExistente = route.params?.categoria;
   const isEdicao = !!categoriaExistente;
 
@@ -49,8 +51,11 @@ export default function AdminCategoryFormScreen({ navigation, route }: Props) {
         subtitle="Configurações do Checklist"
         badge="ADMIN"
       />
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={[styles.card, shadow.card]}>
+      <ScrollView
+        contentContainerStyle={[styles.content, isWideWeb && styles.contentWideWeb]}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={[styles.card, shadow.card, isWideWeb && styles.cardWideWeb]}>
           <TextField
             label="Nome da Categoria"
             placeholder="Ex: Qualidade, Meio Ambiente..."
@@ -103,10 +108,17 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     paddingBottom: spacing.xxl * 4,
   },
+  contentWideWeb: {
+    alignItems: 'center',
+  },
   card: {
     backgroundColor: colors.background,
     borderRadius: radius.lg,
     padding: spacing.lg,
+  },
+  cardWideWeb: {
+    width: '100%',
+    maxWidth: 560,
   },
   label: {
     ...typography.label,

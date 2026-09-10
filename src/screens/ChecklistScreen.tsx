@@ -23,6 +23,7 @@ import { salvarChecklist } from '../db/checklistsRepo';
 import { contarNaoLidas } from '../db/notificacoesRepo';
 import { atualizarPushToken, listPessoas } from '../db/pessoasRepo';
 import { listQuestoesAtivas } from '../db/questoesRepo';
+import { useIsWideWeb } from '../hooks/useResponsive';
 import { colors, radius, shadow, spacing, typography } from '../theme/theme';
 import { Categoria, Pessoa, Questao, RespostaDetalhe, RespostaValor, RootStackParamList } from '../types';
 import { formatDateISO } from '../utils/date';
@@ -45,6 +46,7 @@ const DETALHE_VAZIO: RespostaDetalhe = {
 };
 
 export default function ChecklistScreen({ navigation }: Props) {
+  const isWideWeb = useIsWideWeb();
   const [pessoaId, setPessoaId] = useState<string | null>(null);
   const [responsavelNome, setResponsavelNome] = useState('');
   const [responsavelSetor, setResponsavelSetor] = useState('');
@@ -252,6 +254,7 @@ export default function ChecklistScreen({ navigation }: Props) {
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             keyboardShouldPersistTaps="handled"
           >
+            <View style={[isWideWeb && styles.wideInner]}>
             <View style={[styles.identCard, shadow.card]}>
               <View style={styles.sectionTitleRow}>
                 <Ionicons name="person-circle-outline" size={18} color={colors.primary} />
@@ -308,19 +311,22 @@ export default function ChecklistScreen({ navigation }: Props) {
                 style={styles.textarea}
               />
             </View>
+            </View>
           </ScrollView>
 
-          <View style={styles.footer}>
-            <Text style={styles.footerProgress}>
-              {totalRespondidas}/{totalPerguntas} itens respondidos
-            </Text>
-            <Button
-              label="Salvar Checklist"
-              icon="checkmark-done-outline"
-              onPress={handleSalvar}
-              loading={submitting}
-              style={styles.saveButton}
-            />
+          <View style={[styles.footer, isWideWeb && styles.footerWideWeb]}>
+            <View style={[isWideWeb && styles.footerInnerWideWeb]}>
+              <Text style={styles.footerProgress}>
+                {totalRespondidas}/{totalPerguntas} itens respondidos
+              </Text>
+              <Button
+                label="Salvar Checklist"
+                icon="checkmark-done-outline"
+                onPress={handleSalvar}
+                loading={submitting}
+                style={styles.saveButton}
+              />
+            </View>
           </View>
         </>
       )}
@@ -332,6 +338,11 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.backgroundAlt },
   scrollContent: {
     paddingBottom: spacing.xxl * 4,
+  },
+  wideInner: {
+    width: '100%',
+    maxWidth: 800,
+    alignSelf: 'center',
   },
   identCard: {
     backgroundColor: colors.background,
@@ -418,6 +429,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
     paddingBottom: spacing.md,
+  },
+  footerWideWeb: {
+    alignItems: 'center',
+  },
+  footerInnerWideWeb: {
+    width: '100%',
+    maxWidth: 800,
   },
   footerProgress: {
     ...typography.label,

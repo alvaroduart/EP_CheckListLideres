@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Alert, Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { excluirTarefa, STATUS_LABEL } from '../db/tarefasRepo';
+import { useIsWideWeb } from '../hooks/useResponsive';
 import { colors, radius, shadow, spacing, typography } from '../theme/theme';
 import { Tarefa, TarefaStatus } from '../types';
 
@@ -22,6 +23,7 @@ interface AdminTarefasTabProps {
 }
 
 export default function AdminTarefasTab({ tarefas, onChanged }: AdminTarefasTabProps) {
+  const isWideWeb = useIsWideWeb();
   const [fotoPreview, setFotoPreview] = useState<string | null>(null);
 
   const abertas = tarefas.filter((t) => t.status !== 'concluida');
@@ -47,7 +49,7 @@ export default function AdminTarefasTab({ tarefas, onChanged }: AdminTarefasTabP
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isWideWeb && styles.containerWideWeb]}>
       <Text style={styles.summary}>
         {abertas.length} tarefa(s) em aberto · {concluidas.length} concluída(s)
       </Text>
@@ -56,10 +58,14 @@ export default function AdminTarefasTab({ tarefas, onChanged }: AdminTarefasTabP
         <Text style={styles.emptyText}>Nenhuma tarefa atribuída ainda.</Text>
       )}
 
+      <View style={[isWideWeb && styles.gridWide]}>
       {ordenadas.map((tarefa) => {
         const statusStyle = STATUS_COLOR[tarefa.status];
         return (
-          <View key={tarefa.id} style={[styles.card, shadow.card, { borderLeftColor: statusStyle.cor }]}>
+          <View
+            key={tarefa.id}
+            style={[styles.card, shadow.card, { borderLeftColor: statusStyle.cor }, isWideWeb && styles.cardWide]}
+          >
             <View style={styles.headerRow}>
               <View style={styles.headerText}>
                 {tarefa.categoria ? <Text style={styles.categoria}>{tarefa.categoria}</Text> : null}
@@ -105,6 +111,7 @@ export default function AdminTarefasTab({ tarefas, onChanged }: AdminTarefasTabP
           </View>
         );
       })}
+      </View>
 
       <Modal visible={!!fotoPreview} transparent animationType="fade" onRequestClose={() => setFotoPreview(null)}>
         <Pressable style={styles.previewOverlay} onPress={() => setFotoPreview(null)}>
@@ -122,6 +129,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
   },
+  containerWideWeb: {
+    width: '100%',
+    maxWidth: 1120,
+    alignSelf: 'center',
+  },
   summary: {
     ...typography.label,
     color: colors.textSecondary,
@@ -133,12 +145,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing.xl,
   },
+  gridWide: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
   card: {
     backgroundColor: colors.background,
     borderRadius: radius.md,
     borderLeftWidth: 4,
     padding: spacing.md,
     marginBottom: spacing.sm,
+  },
+  cardWide: {
+    width: '48.5%',
   },
   headerRow: {
     flexDirection: 'row',

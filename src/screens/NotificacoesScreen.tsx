@@ -17,6 +17,7 @@ import {
   marcarComoLida,
   marcarTodasComoLidas,
 } from '../db/notificacoesRepo';
+import { useIsWideWeb } from '../hooks/useResponsive';
 import { colors, radius, shadow, spacing, typography } from '../theme/theme';
 import { Notificacao, NotificacaoTipo, RootStackParamList } from '../types';
 import { getPessoaCache } from '../utils/pessoaCache';
@@ -38,6 +39,7 @@ function formatarDataHora(iso: string): string {
 }
 
 export default function NotificacoesScreen({ navigation }: Props) {
+  const isWideWeb = useIsWideWeb();
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -100,10 +102,12 @@ export default function NotificacoesScreen({ navigation }: Props) {
     <View style={styles.flex}>
       <Header title="Notificações" subtitle={pessoaId ? `${naoLidas} não lida(s)` : undefined} />
       <View style={styles.toolbar}>
-        <Button label="Voltar" variant="text" icon="arrow-back-outline" onPress={() => navigation.goBack()} />
-        {naoLidas > 0 && (
-          <Button label="Marcar todas como lidas" variant="text" onPress={handleMarcarTodas} />
-        )}
+        <View style={[styles.toolbarInner, isWideWeb && styles.toolbarInnerWideWeb]}>
+          <Button label="Voltar" variant="text" icon="arrow-back-outline" onPress={() => navigation.goBack()} />
+          {naoLidas > 0 && (
+            <Button label="Marcar todas como lidas" variant="text" onPress={handleMarcarTodas} />
+          )}
+        </View>
       </View>
 
       {loading ? (
@@ -124,35 +128,38 @@ export default function NotificacoesScreen({ navigation }: Props) {
         </View>
       ) : (
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, isWideWeb && styles.scrollContentWideWeb]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
-          {notificacoes.map((notificacao) => (
-            <Pressable
-              key={notificacao.id}
-              onPress={() => handleTocar(notificacao)}
-              style={({ pressed }) => [
-                styles.card,
-                shadow.card,
-                !notificacao.lida && styles.cardNaoLida,
-                pressed && styles.cardPressed,
-              ]}
-            >
-              <View style={[styles.iconBadge, { backgroundColor: NOTIF_STYLE[notificacao.tipo].corFundo }]}>
-                <Ionicons
-                  name={NOTIF_STYLE[notificacao.tipo].icone}
-                  size={18}
-                  color={NOTIF_STYLE[notificacao.tipo].cor}
-                />
-              </View>
-              <View style={styles.cardText}>
-                <Text style={styles.cardTitulo}>{notificacao.titulo}</Text>
-                <Text style={styles.cardMensagem}>{notificacao.mensagem}</Text>
-                <Text style={styles.cardData}>{formatarDataHora(notificacao.criadoEm)}</Text>
-              </View>
-              {!notificacao.lida && <View style={styles.dotNaoLida} />}
-            </Pressable>
-          ))}
+          <View style={[isWideWeb && styles.gridWide]}>
+            {notificacoes.map((notificacao) => (
+              <Pressable
+                key={notificacao.id}
+                onPress={() => handleTocar(notificacao)}
+                style={({ pressed }) => [
+                  styles.card,
+                  shadow.card,
+                  !notificacao.lida && styles.cardNaoLida,
+                  isWideWeb && styles.cardWide,
+                  pressed && styles.cardPressed,
+                ]}
+              >
+                <View style={[styles.iconBadge, { backgroundColor: NOTIF_STYLE[notificacao.tipo].corFundo }]}>
+                  <Ionicons
+                    name={NOTIF_STYLE[notificacao.tipo].icone}
+                    size={18}
+                    color={NOTIF_STYLE[notificacao.tipo].cor}
+                  />
+                </View>
+                <View style={styles.cardText}>
+                  <Text style={styles.cardTitulo}>{notificacao.titulo}</Text>
+                  <Text style={styles.cardMensagem}>{notificacao.mensagem}</Text>
+                  <Text style={styles.cardData}>{formatarDataHora(notificacao.criadoEm)}</Text>
+                </View>
+                {!notificacao.lida && <View style={styles.dotNaoLida} />}
+              </Pressable>
+            ))}
+          </View>
         </ScrollView>
       )}
     </View>
@@ -162,15 +169,32 @@ export default function NotificacoesScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.backgroundAlt },
   toolbar: {
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.background,
+  },
+  toolbarInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.background,
+  },
+  toolbarInnerWideWeb: {
+    width: '100%',
+    maxWidth: 900,
+    alignSelf: 'center',
   },
   scrollContent: {
     padding: spacing.lg,
     paddingBottom: spacing.xxl,
+  },
+  scrollContentWideWeb: {
+    alignItems: 'center',
+  },
+  gridWide: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    width: '100%',
+    maxWidth: 900,
   },
   centered: {
     flex: 1,
@@ -198,6 +222,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: spacing.md,
     marginBottom: spacing.sm,
+  },
+  cardWide: {
+    width: '48.5%',
   },
   cardNaoLida: {
     borderLeftWidth: 3,

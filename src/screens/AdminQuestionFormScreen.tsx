@@ -7,12 +7,14 @@ import SelectField from '../components/SelectField';
 import TextField from '../components/TextField';
 import { listCategorias } from '../db/categoriasRepo';
 import { atualizarQuestao, criarQuestao } from '../db/questoesRepo';
+import { useIsWideWeb } from '../hooks/useResponsive';
 import { colors, radius, shadow, spacing } from '../theme/theme';
 import { Categoria, RootStackParamList } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AdminQuestionForm'>;
 
 export default function AdminQuestionFormScreen({ navigation, route }: Props) {
+  const isWideWeb = useIsWideWeb();
   const questaoExistente = route.params?.questao;
   const isEdicao = !!questaoExistente;
 
@@ -72,8 +74,11 @@ export default function AdminQuestionFormScreen({ navigation, route }: Props) {
         subtitle="Configurações do Checklist"
         badge="ADMIN"
       />
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={[styles.card, shadow.card]}>
+      <ScrollView
+        contentContainerStyle={[styles.content, isWideWeb && styles.contentWideWeb]}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={[styles.card, shadow.card, isWideWeb && styles.cardWideWeb]}>
           <SelectField
             label="Categoria"
             options={opcoesCategoria}
@@ -119,10 +124,17 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     paddingBottom: spacing.xxl * 4,
   },
+  contentWideWeb: {
+    alignItems: 'center',
+  },
   card: {
     backgroundColor: colors.background,
     borderRadius: radius.lg,
     padding: spacing.lg,
+  },
+  cardWideWeb: {
+    width: '100%',
+    maxWidth: 560,
   },
   hint: {
     fontSize: 12,

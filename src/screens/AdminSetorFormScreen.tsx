@@ -5,12 +5,14 @@ import Button from '../components/Button';
 import Header from '../components/Header';
 import TextField from '../components/TextField';
 import { atualizarSetor, criarSetor } from '../db/setoresRepo';
+import { useIsWideWeb } from '../hooks/useResponsive';
 import { colors, radius, shadow, spacing } from '../theme/theme';
 import { RootStackParamList } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AdminSetorForm'>;
 
 export default function AdminSetorFormScreen({ navigation, route }: Props) {
+  const isWideWeb = useIsWideWeb();
   const setorExistente = route.params?.setor;
   const isEdicao = !!setorExistente;
 
@@ -44,8 +46,11 @@ export default function AdminSetorFormScreen({ navigation, route }: Props) {
         subtitle="Configurações do Checklist"
         badge="ADMIN"
       />
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={[styles.card, shadow.card]}>
+      <ScrollView
+        contentContainerStyle={[styles.content, isWideWeb && styles.contentWideWeb]}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={[styles.card, shadow.card, isWideWeb && styles.cardWideWeb]}>
           <TextField
             label="Nome do Setor"
             placeholder="Ex: Produção, Manutenção, Qualidade..."
@@ -74,10 +79,17 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     paddingBottom: spacing.xxl * 4,
   },
+  contentWideWeb: {
+    alignItems: 'center',
+  },
   card: {
     backgroundColor: colors.background,
     borderRadius: radius.lg,
     padding: spacing.lg,
+  },
+  cardWideWeb: {
+    width: '100%',
+    maxWidth: 460,
   },
   saveButton: {
     marginTop: spacing.md,

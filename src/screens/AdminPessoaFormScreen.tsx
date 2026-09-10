@@ -7,12 +7,14 @@ import SelectField from '../components/SelectField';
 import TextField from '../components/TextField';
 import { atualizarPessoa, criarPessoa } from '../db/pessoasRepo';
 import { listSetores } from '../db/setoresRepo';
+import { useIsWideWeb } from '../hooks/useResponsive';
 import { colors, radius, shadow, spacing } from '../theme/theme';
 import { RootStackParamList, Setor } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AdminPessoaForm'>;
 
 export default function AdminPessoaFormScreen({ navigation, route }: Props) {
+  const isWideWeb = useIsWideWeb();
   const pessoaExistente = route.params?.pessoa;
   const isEdicao = !!pessoaExistente;
 
@@ -60,8 +62,11 @@ export default function AdminPessoaFormScreen({ navigation, route }: Props) {
         subtitle="Configurações do Checklist"
         badge="ADMIN"
       />
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={[styles.card, shadow.card]}>
+      <ScrollView
+        contentContainerStyle={[styles.content, isWideWeb && styles.contentWideWeb]}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={[styles.card, shadow.card, isWideWeb && styles.cardWideWeb]}>
           <TextField
             label="Nome"
             placeholder="Nome completo"
@@ -107,10 +112,17 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     paddingBottom: spacing.xxl * 4,
   },
+  contentWideWeb: {
+    alignItems: 'center',
+  },
   card: {
     backgroundColor: colors.background,
     borderRadius: radius.lg,
     padding: spacing.lg,
+  },
+  cardWideWeb: {
+    width: '100%',
+    maxWidth: 460,
   },
   hint: {
     fontSize: 12,

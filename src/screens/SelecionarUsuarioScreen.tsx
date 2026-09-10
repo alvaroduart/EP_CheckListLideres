@@ -12,6 +12,7 @@ import {
 import Button from '../components/Button';
 import Header from '../components/Header';
 import { atualizarPushToken, listPessoas } from '../db/pessoasRepo';
+import { useIsWideWeb } from '../hooks/useResponsive';
 import { colors, radius, shadow, spacing, typography } from '../theme/theme';
 import { Pessoa, RootStackParamList } from '../types';
 import { setPessoaCache } from '../utils/pessoaCache';
@@ -20,6 +21,7 @@ import { registrarPushToken } from '../utils/pushNotifications';
 type Props = NativeStackScreenProps<RootStackParamList, 'SelecionarUsuario'>;
 
 export default function SelecionarUsuarioScreen({ navigation }: Props) {
+  const isWideWeb = useIsWideWeb();
   const [pessoas, setPessoas] = useState<Pessoa[]>([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
@@ -92,35 +94,38 @@ export default function SelecionarUsuarioScreen({ navigation }: Props) {
         </View>
       ) : (
         <ScrollView
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, isWideWeb && styles.contentWideWeb]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
           <Text style={styles.description}>Selecione seu nome na lista abaixo para continuar.</Text>
-          {pessoas.map((pessoa) => (
-            <Pressable
-              key={pessoa.id}
-              onPress={() => handleSelecionar(pessoa)}
-              disabled={!!selecionandoId}
-              style={({ pressed }) => [
-                styles.card,
-                shadow.card,
-                pressed && styles.cardPressed,
-              ]}
-            >
-              <View style={styles.iconCircle}>
-                <Ionicons name="person-outline" size={22} color={colors.primary} />
-              </View>
-              <View style={styles.cardText}>
-                <Text style={styles.cardNome}>{pessoa.nome}</Text>
-                <Text style={styles.cardSetor}>{pessoa.setorNome}</Text>
-              </View>
-              {selecionandoId === pessoa.id ? (
-                <Ionicons name="hourglass-outline" size={18} color={colors.textSecondary} />
-              ) : (
-                <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
-              )}
-            </Pressable>
-          ))}
+          <View style={[isWideWeb && styles.gridWide]}>
+            {pessoas.map((pessoa) => (
+              <Pressable
+                key={pessoa.id}
+                onPress={() => handleSelecionar(pessoa)}
+                disabled={!!selecionandoId}
+                style={({ pressed }) => [
+                  styles.card,
+                  shadow.card,
+                  isWideWeb && styles.cardWide,
+                  pressed && styles.cardPressed,
+                ]}
+              >
+                <View style={styles.iconCircle}>
+                  <Ionicons name="person-outline" size={22} color={colors.primary} />
+                </View>
+                <View style={styles.cardText}>
+                  <Text style={styles.cardNome}>{pessoa.nome}</Text>
+                  <Text style={styles.cardSetor}>{pessoa.setorNome}</Text>
+                </View>
+                {selecionandoId === pessoa.id ? (
+                  <Ionicons name="hourglass-outline" size={18} color={colors.textSecondary} />
+                ) : (
+                  <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+                )}
+              </Pressable>
+            ))}
+          </View>
         </ScrollView>
       )}
     </View>
@@ -132,6 +137,16 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.lg,
     paddingBottom: spacing.xxl,
+  },
+  contentWideWeb: {
+    width: '100%',
+    maxWidth: 900,
+    alignSelf: 'center',
+  },
+  gridWide: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   description: {
     ...typography.body,
@@ -167,6 +182,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: spacing.md,
     marginBottom: spacing.sm,
+  },
+  cardWide: {
+    width: '48.5%',
   },
   cardPressed: {
     opacity: 0.75,

@@ -7,6 +7,7 @@ import {
   listMetricasPergunta,
   listMetricasSetor,
 } from '../db/metricasRepo';
+import { useIsWideWeb } from '../hooks/useResponsive';
 import { colors, radius, shadow, spacing, typography } from '../theme/theme';
 import { MetricaCategoria, MetricaGlobal, MetricaPergunta, MetricaSetor } from '../types';
 import Button from './Button';
@@ -26,6 +27,7 @@ function corConformidade(pct: number): string {
 const GLOBAL_VAZIO: MetricaGlobal = { totalChecklists: 0, totalRespostas: 0, totalSim: 0, totalNao: 0 };
 
 export default function AdminMetricasTab() {
+  const isWideWeb = useIsWideWeb();
   const [global, setGlobal] = useState<MetricaGlobal>(GLOBAL_VAZIO);
   const [categorias, setCategorias] = useState<MetricaCategoria[]>([]);
   const [setores, setSetores] = useState<MetricaSetor[]>([]);
@@ -106,7 +108,7 @@ export default function AdminMetricasTab() {
 
   return (
     <ScrollView
-      contentContainerStyle={styles.container}
+      contentContainerStyle={[styles.container, isWideWeb && styles.containerWideWeb]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       <Text style={styles.sectionTitle}>Visão Geral</Text>
@@ -116,24 +118,28 @@ export default function AdminMetricasTab() {
           label="Checklists"
           valor={String(global.totalChecklists)}
           cor={colors.primary}
+          wide={isWideWeb}
         />
         <StatCard
           icon="list-outline"
           label="Respostas"
           valor={String(global.totalRespostas)}
           cor={colors.primary}
+          wide={isWideWeb}
         />
         <StatCard
           icon="checkmark-circle-outline"
           label="Sim"
           valor={String(global.totalSim)}
           cor={colors.success}
+          wide={isWideWeb}
         />
         <StatCard
           icon="close-circle-outline"
           label="Não"
           valor={String(global.totalNao)}
           cor={colors.danger}
+          wide={isWideWeb}
         />
       </View>
 
@@ -154,14 +160,17 @@ export default function AdminMetricasTab() {
       {categoriasOrdenadas.length === 0 ? (
         <Text style={styles.emptyText}>Sem dados ainda.</Text>
       ) : (
-        categoriasOrdenadas.map((cat) => (
-          <MetricaRow
-            key={cat.categoriaNome}
-            titulo={cat.categoriaNome}
-            sim={cat.totalSim}
-            nao={cat.totalNao}
-          />
-        ))
+        <View style={[isWideWeb && styles.gridWide]}>
+          {categoriasOrdenadas.map((cat) => (
+            <MetricaRow
+              key={cat.categoriaNome}
+              titulo={cat.categoriaNome}
+              sim={cat.totalSim}
+              nao={cat.totalNao}
+              wide={isWideWeb}
+            />
+          ))}
+        </View>
       )}
 
       <Text style={styles.sectionTitle}>Por Setor</Text>
@@ -171,32 +180,40 @@ export default function AdminMetricasTab() {
           setor — checklists mais antigos podem não ter essa informação.
         </Text>
       ) : (
-        setoresOrdenados.map((setor) => (
-          <MetricaRow
-            key={setor.setorId}
-            titulo={setor.setorNome}
-            sim={setor.totalSim}
-            nao={setor.totalNao}
-          />
-        ))
+        <View style={[isWideWeb && styles.gridWide]}>
+          {setoresOrdenados.map((setor) => (
+            <MetricaRow
+              key={setor.setorId}
+              titulo={setor.setorNome}
+              sim={setor.totalSim}
+              nao={setor.totalNao}
+              wide={isWideWeb}
+            />
+          ))}
+        </View>
       )}
 
       <Text style={styles.sectionTitle}>Perguntas com Mais Reprovação</Text>
       {perguntasProblematicas.length === 0 ? (
         <Text style={styles.emptyText}>Nenhuma reprovação registrada ainda — ótimo sinal.</Text>
       ) : (
-        perguntasProblematicas.map((pergunta) => (
-          <View key={pergunta.perguntaId} style={[styles.perguntaCard, shadow.card]}>
-            <View style={styles.perguntaTextWrap}>
-              <Text style={styles.perguntaCategoria}>{pergunta.categoria}</Text>
-              <Text style={styles.perguntaTexto}>{pergunta.perguntaTexto}</Text>
+        <View style={[isWideWeb && styles.gridWide]}>
+          {perguntasProblematicas.map((pergunta) => (
+            <View
+              key={pergunta.perguntaId}
+              style={[styles.perguntaCard, shadow.card, isWideWeb && styles.perguntaCardWide]}
+            >
+              <View style={styles.perguntaTextWrap}>
+                <Text style={styles.perguntaCategoria}>{pergunta.categoria}</Text>
+                <Text style={styles.perguntaTexto}>{pergunta.perguntaTexto}</Text>
+              </View>
+              <View style={styles.perguntaBadge}>
+                <Ionicons name="close-circle" size={13} color={colors.danger} />
+                <Text style={styles.perguntaBadgeText}>{pergunta.totalNao}x</Text>
+              </View>
             </View>
-            <View style={styles.perguntaBadge}>
-              <Ionicons name="close-circle" size={13} color={colors.danger} />
-              <Text style={styles.perguntaBadgeText}>{pergunta.totalNao}x</Text>
-            </View>
-          </View>
-        ))
+          ))}
+        </View>
       )}
       <View style={styles.scrollSpacer} />
     </ScrollView>
@@ -208,14 +225,16 @@ function StatCard({
   label,
   valor,
   cor,
+  wide,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   valor: string;
   cor: string;
+  wide?: boolean;
 }) {
   return (
-    <View style={[styles.statCard, shadow.card]}>
+    <View style={[styles.statCard, shadow.card, wide && styles.statCardWide]}>
       <Ionicons name={icon} size={18} color={cor} />
       <Text style={styles.statValor}>{valor}</Text>
       <Text style={styles.statLabel}>{label}</Text>
@@ -233,10 +252,20 @@ function BarraConformidade({ pct }: { pct: number | null }) {
   );
 }
 
-function MetricaRow({ titulo, sim, nao }: { titulo: string; sim: number; nao: number }) {
+function MetricaRow({
+  titulo,
+  sim,
+  nao,
+  wide,
+}: {
+  titulo: string;
+  sim: number;
+  nao: number;
+  wide?: boolean;
+}) {
   const pct = calcularConformidade(sim, nao);
   return (
-    <View style={[styles.metricaCard, shadow.card]}>
+    <View style={[styles.metricaCard, shadow.card, wide && styles.metricaCardWide]}>
       <View style={styles.metricaHeaderRow}>
         <Text style={styles.metricaTitulo} numberOfLines={1}>
           {titulo}
@@ -258,6 +287,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     paddingBottom: spacing.xxl * 2,
+  },
+  containerWideWeb: {
+    width: '100%',
+    maxWidth: 1120,
+    alignSelf: 'center',
+  },
+  gridWide: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   centered: {
     flex: 1,
@@ -291,6 +330,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderRadius: radius.md,
     padding: spacing.md,
+  },
+  statCardWide: {
+    width: '23%',
   },
   statValor: {
     ...typography.title,
@@ -337,6 +379,9 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     marginBottom: spacing.sm,
   },
+  metricaCardWide: {
+    width: '48.5%',
+  },
   metricaHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -366,6 +411,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: spacing.md,
     marginBottom: spacing.sm,
+  },
+  perguntaCardWide: {
+    width: '48.5%',
   },
   perguntaTextWrap: {
     flex: 1,

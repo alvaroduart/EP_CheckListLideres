@@ -3,6 +3,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { excluirCategoria } from '../db/categoriasRepo';
+import { useIsWideWeb } from '../hooks/useResponsive';
 import { colors, radius, shadow, spacing, typography } from '../theme/theme';
 import { Categoria, RootStackParamList } from '../types';
 import Button from './Button';
@@ -20,6 +21,7 @@ export default function AdminCategoriasTab({
   navigation,
   onChanged,
 }: AdminCategoriasTabProps) {
+  const isWideWeb = useIsWideWeb();
   const handleExcluir = (categoria: Categoria) => {
     Alert.alert('Excluir categoria', `Tem certeza que deseja excluir "${categoria.nome}"?`, [
       { text: 'Cancelar', style: 'cancel' },
@@ -39,7 +41,7 @@ export default function AdminCategoriasTab({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isWideWeb && styles.containerWideWeb]}>
       <Button
         label="+ Nova Categoria"
         onPress={() => navigation.navigate('AdminCategoryForm')}
@@ -50,28 +52,30 @@ export default function AdminCategoriasTab({
         <Text style={styles.emptyText}>Nenhuma categoria cadastrada ainda.</Text>
       )}
 
-      {categorias.map((categoria) => (
-        <View key={categoria.id} style={[styles.card, shadow.card]}>
-          <View style={[styles.iconBadge, { backgroundColor: categoria.corFundo }]}>
-            <MaterialCommunityIcons name={categoria.icone} size={20} color={categoria.cor} />
+      <View style={[isWideWeb && styles.gridWide]}>
+        {categorias.map((categoria) => (
+          <View key={categoria.id} style={[styles.card, shadow.card, isWideWeb && styles.cardWide]}>
+            <View style={[styles.iconBadge, { backgroundColor: categoria.corFundo }]}>
+              <MaterialCommunityIcons name={categoria.icone} size={20} color={categoria.cor} />
+            </View>
+            <View style={styles.info}>
+              <Text style={styles.nome}>{categoria.nome}</Text>
+              <Text style={styles.count}>
+                {perguntasPorCategoria[categoria.id] ?? 0} pergunta(s)
+              </Text>
+            </View>
+            <Pressable
+              style={styles.actionButton}
+              onPress={() => navigation.navigate('AdminCategoryForm', { categoria })}
+            >
+              <MaterialCommunityIcons name="pencil-outline" size={18} color={colors.primary} />
+            </Pressable>
+            <Pressable style={styles.actionButton} onPress={() => handleExcluir(categoria)}>
+              <MaterialCommunityIcons name="trash-can-outline" size={18} color={colors.danger} />
+            </Pressable>
           </View>
-          <View style={styles.info}>
-            <Text style={styles.nome}>{categoria.nome}</Text>
-            <Text style={styles.count}>
-              {perguntasPorCategoria[categoria.id] ?? 0} pergunta(s)
-            </Text>
-          </View>
-          <Pressable
-            style={styles.actionButton}
-            onPress={() => navigation.navigate('AdminCategoryForm', { categoria })}
-          >
-            <MaterialCommunityIcons name="pencil-outline" size={18} color={colors.primary} />
-          </Pressable>
-          <Pressable style={styles.actionButton} onPress={() => handleExcluir(categoria)}>
-            <MaterialCommunityIcons name="trash-can-outline" size={18} color={colors.danger} />
-          </Pressable>
-        </View>
-      ))}
+        ))}
+      </View>
     </View>
   );
 }
@@ -80,6 +84,11 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
+  },
+  containerWideWeb: {
+    width: '100%',
+    maxWidth: 1120,
+    alignSelf: 'center',
   },
   newButton: {
     marginBottom: spacing.md,
@@ -90,6 +99,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing.xl,
   },
+  gridWide: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -97,6 +111,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: spacing.md,
     marginBottom: spacing.sm,
+  },
+  cardWide: {
+    width: '48.5%',
   },
   iconBadge: {
     width: 40,

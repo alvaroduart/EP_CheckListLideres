@@ -23,6 +23,7 @@ import { listPessoas } from '../db/pessoasRepo';
 import { alternarAtivoQuestao, excluirQuestao, listTodasQuestoes } from '../db/questoesRepo';
 import { listSetores } from '../db/setoresRepo';
 import { listTodasTarefas } from '../db/tarefasRepo';
+import { useIsWideWeb } from '../hooks/useResponsive';
 import { colors, radius, shadow, spacing, typography } from '../theme/theme';
 import { Categoria, Pessoa, Questao, RootStackParamList, Setor, Tarefa } from '../types';
 
@@ -30,6 +31,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Admin'>;
 type Aba = 'perguntas' | 'categorias' | 'setores' | 'pessoas' | 'tarefas' | 'historico' | 'metricas';
 
 export default function AdminScreen({ navigation }: Props) {
+  const isWideWeb = useIsWideWeb();
   const [aba, setAba] = useState<Aba>('perguntas');
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [questoes, setQuestoes] = useState<Questao[]>([]);
@@ -150,21 +152,23 @@ export default function AdminScreen({ navigation }: Props) {
     <View style={styles.flex}>
       <Header title="Administração" subtitle={`${totalAtivas} pergunta(s) ativa(s)`} badge="ADMIN" />
       <View style={styles.toolbar}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.tabs}
-          contentContainerStyle={styles.tabsContent}
-        >
-          <TabButton label="Perguntas" icon="checkbox-outline" active={aba === 'perguntas'} onPress={() => setAba('perguntas')} />
-          <TabButton label="Categorias" icon="pricetags-outline" active={aba === 'categorias'} onPress={() => setAba('categorias')} />
-          <TabButton label="Setores" icon="business-outline" active={aba === 'setores'} onPress={() => setAba('setores')} />
-          <TabButton label="Pessoas" icon="people-outline" active={aba === 'pessoas'} onPress={() => setAba('pessoas')} />
-          <TabButton label="Tarefas" icon="clipboard-outline" active={aba === 'tarefas'} onPress={() => setAba('tarefas')} />
-          <TabButton label="Histórico" icon="time-outline" active={aba === 'historico'} onPress={() => setAba('historico')} />
-          <TabButton label="Métricas" icon="stats-chart-outline" active={aba === 'metricas'} onPress={() => setAba('metricas')} />
-        </ScrollView>
-        <Button label="Sair" variant="text" icon="log-out-outline" onPress={handleLogout} style={styles.logoutButton} />
+        <View style={[styles.toolbarInner, isWideWeb && styles.toolbarInnerWideWeb]}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.tabs}
+            contentContainerStyle={styles.tabsContent}
+          >
+            <TabButton label="Perguntas" icon="checkbox-outline" active={aba === 'perguntas'} onPress={() => setAba('perguntas')} />
+            <TabButton label="Categorias" icon="pricetags-outline" active={aba === 'categorias'} onPress={() => setAba('categorias')} />
+            <TabButton label="Setores" icon="business-outline" active={aba === 'setores'} onPress={() => setAba('setores')} />
+            <TabButton label="Pessoas" icon="people-outline" active={aba === 'pessoas'} onPress={() => setAba('pessoas')} />
+            <TabButton label="Tarefas" icon="clipboard-outline" active={aba === 'tarefas'} onPress={() => setAba('tarefas')} />
+            <TabButton label="Histórico" icon="time-outline" active={aba === 'historico'} onPress={() => setAba('historico')} />
+            <TabButton label="Métricas" icon="stats-chart-outline" active={aba === 'metricas'} onPress={() => setAba('metricas')} />
+          </ScrollView>
+          <Button label="Sair" variant="text" icon="log-out-outline" onPress={handleLogout} style={styles.logoutButton} />
+        </View>
       </View>
 
       {loading ? (
@@ -183,75 +187,87 @@ export default function AdminScreen({ navigation }: Props) {
           contentContainerStyle={styles.scrollContent}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
-          {gruposPerguntas.length === 0 && (
-            <View style={styles.centered}>
-              <Ionicons name="file-tray-outline" size={28} color={colors.textSecondary} />
-              <Text style={styles.infoText}>Nenhuma pergunta cadastrada ainda.</Text>
-            </View>
-          )}
-          {gruposPerguntas.map(({ categoria, perguntas }) => (
-            <View key={categoria.id} style={styles.categoryBlock}>
-              <View style={styles.categoryTitleRow}>
-                <View style={[styles.categoryIconBadge, { backgroundColor: categoria.corFundo }]}>
-                  <MaterialCommunityIcons name={categoria.icone} size={15} color={categoria.cor} />
-                </View>
-                <Text style={[styles.categoryTitle, { color: categoria.cor }]}>{categoria.nome}</Text>
+          <View style={[isWideWeb && styles.wideInner]}>
+            {gruposPerguntas.length === 0 && (
+              <View style={styles.centered}>
+                <Ionicons name="file-tray-outline" size={28} color={colors.textSecondary} />
+                <Text style={styles.infoText}>Nenhuma pergunta cadastrada ainda.</Text>
               </View>
-              {perguntas.map((questao) => (
-                <View key={questao.id} style={[styles.questionCard, shadow.card, { borderLeftColor: categoria.cor }]}>
-                  <View style={styles.questionRow}>
-                    <Text style={[styles.questionText, !questao.ativo && styles.questionTextInativo]}>
-                      {questao.pergunta}
-                    </Text>
+            )}
+            {gruposPerguntas.map(({ categoria, perguntas }) => (
+              <View key={categoria.id} style={styles.categoryBlock}>
+                <View style={styles.categoryTitleRow}>
+                  <View style={[styles.categoryIconBadge, { backgroundColor: categoria.corFundo }]}>
+                    <MaterialCommunityIcons name={categoria.icone} size={15} color={categoria.cor} />
+                  </View>
+                  <Text style={[styles.categoryTitle, { color: categoria.cor }]}>{categoria.nome}</Text>
+                </View>
+                <View style={[isWideWeb && styles.questionsGridWide]}>
+                  {perguntas.map((questao) => (
                     <View
+                      key={questao.id}
                       style={[
-                        styles.statusBadge,
-                        { backgroundColor: questao.ativo ? colors.successBg : colors.dangerBg },
+                        styles.questionCard,
+                        shadow.card,
+                        { borderLeftColor: categoria.cor },
+                        isWideWeb && styles.questionCardWide,
                       ]}
                     >
-                      <Ionicons
-                        name={questao.ativo ? 'checkmark-circle' : 'close-circle'}
-                        size={12}
-                        color={questao.ativo ? colors.success : colors.danger}
-                      />
-                      <Text
-                        style={[
-                          styles.statusBadgeText,
-                          { color: questao.ativo ? colors.success : colors.danger },
-                        ]}
-                      >
-                        {questao.ativo ? 'Ativa' : 'Inativa'}
-                      </Text>
+                      <View style={styles.questionRow}>
+                        <Text style={[styles.questionText, !questao.ativo && styles.questionTextInativo]}>
+                          {questao.pergunta}
+                        </Text>
+                        <View
+                          style={[
+                            styles.statusBadge,
+                            { backgroundColor: questao.ativo ? colors.successBg : colors.dangerBg },
+                          ]}
+                        >
+                          <Ionicons
+                            name={questao.ativo ? 'checkmark-circle' : 'close-circle'}
+                            size={12}
+                            color={questao.ativo ? colors.success : colors.danger}
+                          />
+                          <Text
+                            style={[
+                              styles.statusBadgeText,
+                              { color: questao.ativo ? colors.success : colors.danger },
+                            ]}
+                          >
+                            {questao.ativo ? 'Ativa' : 'Inativa'}
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.actionsRow}>
+                        <ActionChip
+                          icon="create-outline"
+                          label="Editar"
+                          color={colors.primary}
+                          onPress={() => navigation.navigate('AdminQuestionForm', { questao })}
+                          disabled={busyId === questao.id}
+                        />
+                        <ActionChip
+                          icon={questao.ativo ? 'eye-off-outline' : 'eye-outline'}
+                          label={questao.ativo ? 'Inativar' : 'Ativar'}
+                          color={colors.warning}
+                          onPress={() => handleToggleAtivo(questao)}
+                          disabled={busyId === questao.id}
+                        />
+                        <ActionChip
+                          icon="trash-outline"
+                          label="Excluir"
+                          color={colors.danger}
+                          onPress={() => handleExcluir(questao)}
+                          disabled={busyId === questao.id}
+                        />
+                      </View>
                     </View>
-                  </View>
-                  <View style={styles.actionsRow}>
-                    <ActionChip
-                      icon="create-outline"
-                      label="Editar"
-                      color={colors.primary}
-                      onPress={() => navigation.navigate('AdminQuestionForm', { questao })}
-                      disabled={busyId === questao.id}
-                    />
-                    <ActionChip
-                      icon={questao.ativo ? 'eye-off-outline' : 'eye-outline'}
-                      label={questao.ativo ? 'Inativar' : 'Ativar'}
-                      color={colors.warning}
-                      onPress={() => handleToggleAtivo(questao)}
-                      disabled={busyId === questao.id}
-                    />
-                    <ActionChip
-                      icon="trash-outline"
-                      label="Excluir"
-                      color={colors.danger}
-                      onPress={() => handleExcluir(questao)}
-                      disabled={busyId === questao.id}
-                    />
-                  </View>
+                  ))}
                 </View>
-              ))}
-            </View>
-          ))}
-          <View style={styles.scrollSpacer} />
+              </View>
+            ))}
+            <View style={styles.scrollSpacer} />
+          </View>
         </ScrollView>
       ) : aba === 'categorias' ? (
         <ScrollView
@@ -371,12 +387,19 @@ function ActionChip({
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.backgroundAlt },
   toolbar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     backgroundColor: colors.background,
+  },
+  toolbarInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  toolbarInnerWideWeb: {
+    width: '100%',
+    maxWidth: 1120,
+    alignSelf: 'center',
   },
   tabs: {
     flexGrow: 0,
@@ -418,6 +441,19 @@ const styles = StyleSheet.create({
   },
   scrollSpacer: {
     height: spacing.xl,
+  },
+  wideInner: {
+    width: '100%',
+    maxWidth: 1120,
+    alignSelf: 'center',
+  },
+  questionsGridWide: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  questionCardWide: {
+    width: '48.5%',
   },
   centered: {
     flex: 1,

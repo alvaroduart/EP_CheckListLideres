@@ -6,12 +6,14 @@ import Button from '../components/Button';
 import Header from '../components/Header';
 import TextField from '../components/TextField';
 import { ADMIN_PASSWORD } from '../config/appConfig';
+import { useIsWideWeb } from '../hooks/useResponsive';
 import { colors, radius, shadow, spacing, typography } from '../theme/theme';
 import { RootStackParamList } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AdminLogin'>;
 
 export default function AdminLoginScreen({ navigation }: Props) {
+  const isWideWeb = useIsWideWeb();
   const [senha, setSenha] = useState('');
 
   const handleEntrar = () => {
@@ -30,10 +32,10 @@ export default function AdminLoginScreen({ navigation }: Props) {
     >
       <Header title="Administração" subtitle="Configurações do checklist" badge="ADMIN" />
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, isWideWeb && styles.contentWideWeb]}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={[styles.card, shadow.card]}>
+        <View style={[styles.card, shadow.card, isWideWeb && styles.cardWideWeb]}>
           <View style={styles.iconCircle}>
             <Ionicons name="lock-closed-outline" size={30} color={colors.primary} />
           </View>
@@ -72,11 +74,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingBottom: spacing.xxl * 4,
   },
+  contentWideWeb: {
+    alignItems: 'center',
+  },
   card: {
     backgroundColor: colors.background,
     borderRadius: radius.lg,
     padding: spacing.xl,
     alignItems: 'stretch',
+  },
+  cardWideWeb: {
+    width: '100%',
+    maxWidth: 460,
   },
   iconCircle: {
     width: 64,

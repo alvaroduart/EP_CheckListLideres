@@ -3,6 +3,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { excluirSetor } from '../db/setoresRepo';
+import { useIsWideWeb } from '../hooks/useResponsive';
 import { colors, radius, shadow, spacing, typography } from '../theme/theme';
 import { RootStackParamList, Setor } from '../types';
 import Button from './Button';
@@ -20,6 +21,7 @@ export default function AdminSetoresTab({
   navigation,
   onChanged,
 }: AdminSetoresTabProps) {
+  const isWideWeb = useIsWideWeb();
   const handleExcluir = (setor: Setor) => {
     Alert.alert('Excluir setor', `Tem certeza que deseja excluir "${setor.nome}"?`, [
       { text: 'Cancelar', style: 'cancel' },
@@ -39,7 +41,7 @@ export default function AdminSetoresTab({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isWideWeb && styles.containerWideWeb]}>
       <Button
         label="+ Novo Setor"
         onPress={() => navigation.navigate('AdminSetorForm')}
@@ -50,26 +52,28 @@ export default function AdminSetoresTab({
         <Text style={styles.emptyText}>Nenhum setor cadastrado ainda.</Text>
       )}
 
-      {setores.map((setor) => (
-        <View key={setor.id} style={[styles.card, shadow.card]}>
-          <View style={styles.iconBadge}>
-            <Ionicons name="business-outline" size={20} color={colors.primary} />
+      <View style={[isWideWeb && styles.gridWide]}>
+        {setores.map((setor) => (
+          <View key={setor.id} style={[styles.card, shadow.card, isWideWeb && styles.cardWide]}>
+            <View style={styles.iconBadge}>
+              <Ionicons name="business-outline" size={20} color={colors.primary} />
+            </View>
+            <View style={styles.info}>
+              <Text style={styles.nome}>{setor.nome}</Text>
+              <Text style={styles.count}>{pessoasPorSetor[setor.id] ?? 0} pessoa(s)</Text>
+            </View>
+            <Pressable
+              style={styles.actionButton}
+              onPress={() => navigation.navigate('AdminSetorForm', { setor })}
+            >
+              <Ionicons name="create-outline" size={18} color={colors.primary} />
+            </Pressable>
+            <Pressable style={styles.actionButton} onPress={() => handleExcluir(setor)}>
+              <Ionicons name="trash-outline" size={18} color={colors.danger} />
+            </Pressable>
           </View>
-          <View style={styles.info}>
-            <Text style={styles.nome}>{setor.nome}</Text>
-            <Text style={styles.count}>{pessoasPorSetor[setor.id] ?? 0} pessoa(s)</Text>
-          </View>
-          <Pressable
-            style={styles.actionButton}
-            onPress={() => navigation.navigate('AdminSetorForm', { setor })}
-          >
-            <Ionicons name="create-outline" size={18} color={colors.primary} />
-          </Pressable>
-          <Pressable style={styles.actionButton} onPress={() => handleExcluir(setor)}>
-            <Ionicons name="trash-outline" size={18} color={colors.danger} />
-          </Pressable>
-        </View>
-      ))}
+        ))}
+      </View>
     </View>
   );
 }
@@ -78,6 +82,11 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
+  },
+  containerWideWeb: {
+    width: '100%',
+    maxWidth: 1120,
+    alignSelf: 'center',
   },
   newButton: {
     marginBottom: spacing.md,
@@ -88,6 +97,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing.xl,
   },
+  gridWide: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -95,6 +109,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: spacing.md,
     marginBottom: spacing.sm,
+  },
+  cardWide: {
+    width: '48.5%',
   },
   iconBadge: {
     width: 40,

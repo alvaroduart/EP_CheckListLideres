@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { excluirChecklist, getChecklistDetalhe, listChecklists } from '../db/checklistsRepo';
+import { useIsWideWeb } from '../hooks/useResponsive';
 import { colors, radius, shadow, spacing, typography } from '../theme/theme';
 import { ChecklistDetalhe, ChecklistRegistro } from '../types';
 import { excluirFoto } from '../utils/photos';
@@ -26,6 +27,7 @@ function formatarDataHora(iso: string): string {
 }
 
 export default function AdminHistoricoTab() {
+  const isWideWeb = useIsWideWeb();
   const [registros, setRegistros] = useState<ChecklistRegistro[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -121,7 +123,7 @@ export default function AdminHistoricoTab() {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, isWideWeb && styles.contentWideWeb]}
       refreshControl={<RefreshControl refreshing={false} onRefresh={carregar} />}
     >
       {registros.length === 0 ? (
@@ -243,6 +245,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     paddingBottom: spacing.xxl,
+  },
+  contentWideWeb: {
+    width: '100%',
+    maxWidth: 900,
+    alignSelf: 'center',
   },
   centered: {
     alignItems: 'center',
