@@ -53,6 +53,11 @@ create table if not exists setores (
   ordem integer not null
 );
 
+-- Setor ao qual a pergunta pertence. "null" = pergunta aparece para todos os
+-- setores (usado nas perguntas antigas, criadas antes dessa coluna existir).
+-- "on delete set null" evita apagar a pergunta se o setor for excluído depois.
+alter table perguntas add column if not exists setor_id text references setores(id) on delete set null;
+
 create table if not exists pessoas (
   id text primary key,
   nome text not null,

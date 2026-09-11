@@ -16,6 +16,8 @@ export interface Questao {
   id: string;
   categoriaId: string;
   categoria: string;
+  setorId: string | null;
+  setorNome: string | null;
   pergunta: string;
   ativo: boolean;
   ordem: number;

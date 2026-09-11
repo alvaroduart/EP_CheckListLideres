@@ -62,8 +62,9 @@ src/
    [`supabase/schema.sql`](supabase/schema.sql) deste repositório e clique em **Run**.
    > Se você já rodou uma versão anterior deste script, **rode de novo** — ele foi atualizado
    > com as tabelas de `setores`, `pessoas`, `tarefas` e `notificacoes`, as views de métricas
-   > (`metricas_globais`, `metricas_categoria`, `metricas_setor`, `metricas_pergunta`), além de
-   > novas colunas em `respostas`, `checklists` e `notificacoes`. É seguro rodar de novo: tudo usa
+   > (`metricas_globais`, `metricas_categoria`, `metricas_setor`, `metricas_pergunta`), a coluna
+   > `setor_id` em `perguntas`, além de novas colunas em `respostas`, `checklists` e
+   > `notificacoes`. É seguro rodar de novo: tudo usa
    > `if not exists`/`drop policy if exists`/`create or replace view`, e os dados que já existem
    > não são apagados nem duplicados.
 3. Vá em **Project Settings → API** e copie a **Project URL** e a **anon / public key** (ou a
@@ -144,7 +145,8 @@ de todas as telas (`assets/logo-full.png`), ícone do app, favicon e splash scre
   Checklist para selecionar outra pessoa no mesmo aparelho, se necessário. Ninguém consegue
   criar um usuário novo por conta própria; só o administrador faz isso (aba Pessoas).
 - **Checklist**: identificação (nome/setor preenchidos automaticamente), Data, Turno, os itens
-  por categoria e observações gerais. Quando uma pergunta é marcada como **Não**, abre um
+  por categoria e observações gerais. Só aparecem as perguntas cadastradas para o setor da
+  pessoa (mais as perguntas sem setor definido, visíveis para todos). Quando uma pergunta é marcada como **Não**, abre um
   bloco extra para: comentário específico daquela pergunta, anexar foto e **atribuir a tarefa**
   a outra pessoa já cadastrada. O botão **Salvar Checklist** valida que todas as perguntas foram
   respondidas antes de gravar. Ao salvar: quem foi atribuído numa tarefa recebe uma notificação
@@ -159,7 +161,9 @@ de todas as telas (`assets/logo-full.png`), ícone do app, favicon e splash scre
   atualização.
 - **Administração** (ícone de engrenagem no cabeçalho, protegido por senha) tem sete abas:
   - **Perguntas**: lista por categoria com **Editar**, **Ativar/Inativar** e **Excluir**, e
-    **+ Nova Pergunta**.
+    **+ Nova Pergunta**. Toda pergunta tem uma **Categoria** e um **Setor** — só aparece no
+    checklist de quem for daquele setor (perguntas antigas, criadas antes dessa coluna existir,
+    aparecem como "Todos os setores" e continuam visíveis para todo mundo até serem editadas).
   - **Categorias**: ícone e cor próprios; **+ Nova Categoria** cria categorias além das 3
     padrão. Só pode ser excluída se não tiver perguntas vinculadas.
   - **Setores**: **+ Novo Setor** — usados no cadastro das pessoas. Só pode ser excluído se não
@@ -170,7 +174,8 @@ de todas as telas (`assets/logo-full.png`), ícone do app, favicon e splash scre
     atribuiu/recebeu, comentário e foto — visão geral para o administrador acompanhar pendências.
   - **Histórico**: todos os checklists já enviados (mais recente primeiro), com resumo
     Sim/Não/fotos. Tocar expande o detalhe completo — categoria, pergunta, resposta, comentário,
-    a quem foi atribuído e a foto anexada (se houver) — com opção de excluir o registro.
+    a quem foi atribuído e a foto anexada (se houver). Consulta apenas — não é possível excluir
+    um checklist do histórico pelo app.
   - **Métricas**: visão geral (total de checklists/respostas, Sim x Não) e % de conformidade
     global, com o mesmo recorte por **categoria** (5'S, Segurança, NR12...) e por **setor**, além
     de um ranking das perguntas com mais reprovação ("Não"). As barras ficam verdes (≥90%),

@@ -80,7 +80,7 @@ export default function ChecklistScreen({ navigation }: Props) {
 
       const [cats, dados, listaPessoas, contagem] = await Promise.all([
         listCategorias(),
-        listQuestoesAtivas(),
+        listQuestoesAtivas(pessoa.setorId),
         listPessoas(),
         contarNaoLidas(pessoa.id),
       ]);

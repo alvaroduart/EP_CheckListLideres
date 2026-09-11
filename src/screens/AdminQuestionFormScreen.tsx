@@ -7,9 +7,10 @@ import SelectField from '../components/SelectField';
 import TextField from '../components/TextField';
 import { listCategorias } from '../db/categoriasRepo';
 import { atualizarQuestao, criarQuestao } from '../db/questoesRepo';
+import { listSetores } from '../db/setoresRepo';
 import { useIsWideWeb } from '../hooks/useResponsive';
 import { colors, radius, shadow, spacing } from '../theme/theme';
-import { Categoria, RootStackParamList } from '../types';
+import { Categoria, RootStackParamList, Setor } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AdminQuestionForm'>;
 
@@ -19,7 +20,9 @@ export default function AdminQuestionFormScreen({ navigation, route }: Props) {
   const isEdicao = !!questaoExistente;
 
   const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [setores, setSetores] = useState<Setor[]>([]);
   const [categoriaId, setCategoriaId] = useState(questaoExistente?.categoriaId ?? '');
+  const [setorId, setSetorId] = useState(questaoExistente?.setorId ?? '');
   const [pergunta, setPergunta] = useState(questaoExistente?.pergunta ?? '');
   const [salvando, setSalvando] = useState(false);
 
@@ -28,21 +31,35 @@ export default function AdminQuestionFormScreen({ navigation, route }: Props) {
       listCategorias()
         .then(setCategorias)
         .catch(() => {});
+      listSetores()
+        .then(setSetores)
+        .catch(() => {});
     });
     return unsubscribe;
   }, [navigation]);
 
   const categoriaNomeSelecionado = categorias.find((c) => c.id === categoriaId)?.nome ?? '';
   const opcoesCategoria = categorias.map((c) => c.nome);
+  const setorNomeSelecionado = setores.find((s) => s.id === setorId)?.nome ?? '';
+  const opcoesSetor = setores.map((s) => s.nome);
 
   const handleSelecionarCategoria = (nome: string) => {
     const categoria = categorias.find((c) => c.nome === nome);
     if (categoria) setCategoriaId(categoria.id);
   };
 
+  const handleSelecionarSetor = (nome: string) => {
+    const setor = setores.find((s) => s.nome === nome);
+    if (setor) setSetorId(setor.id);
+  };
+
   const handleSalvar = async () => {
     if (!categoriaId) {
       Alert.alert('Campo obrigatório', 'Selecione a categoria da pergunta.');
+      return;
+    }
+    if (!setorId) {
+      Alert.alert('Campo obrigatório', 'Selecione o setor da pergunta.');
       return;
     }
     if (!pergunta.trim()) {
@@ -52,9 +69,9 @@ export default function AdminQuestionFormScreen({ navigation, route }: Props) {
     setSalvando(true);
     try {
       if (isEdicao) {
-        await atualizarQuestao(questaoExistente!.id, categoriaId, pergunta.trim());
+        await atualizarQuestao(questaoExistente!.id, categoriaId, setorId, pergunta.trim());
       } else {
-        await criarQuestao(categoriaId, pergunta.trim());
+        await criarQuestao(categoriaId, setorId, pergunta.trim());
       }
       navigation.goBack();
     } catch (err) {
@@ -90,6 +107,20 @@ export default function AdminQuestionFormScreen({ navigation, route }: Props) {
           {categorias.length === 0 && (
             <Text style={styles.hint}>
               Nenhuma categoria cadastrada. Crie uma na aba "Categorias" antes de adicionar perguntas.
+            </Text>
+          )}
+
+          <SelectField
+            label="Setor"
+            options={opcoesSetor}
+            value={setorNomeSelecionado}
+            onChange={handleSelecionarSetor}
+            icon="business-outline"
+            placeholder="Selecione o setor"
+          />
+          {setores.length === 0 && (
+            <Text style={styles.hint}>
+              Nenhum setor cadastrado. Crie um na aba "Setores" antes de adicionar perguntas.
             </Text>
           )}
 

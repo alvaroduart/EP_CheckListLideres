@@ -238,6 +238,12 @@ export default function AdminScreen({ navigation }: Props) {
                           </Text>
                         </View>
                       </View>
+                      <View style={styles.setorBadge}>
+                        <Ionicons name="business-outline" size={11} color={colors.textSecondary} />
+                        <Text style={styles.setorBadgeText}>
+                          {questao.setorNome ?? 'Todos os setores'}
+                        </Text>
+                      </View>
                       <View style={styles.actionsRow}>
                         <ActionChip
                           icon="create-outline"
@@ -527,6 +533,16 @@ const styles = StyleSheet.create({
   statusBadgeText: {
     fontSize: 11,
     fontWeight: '700',
+    marginLeft: 3,
+  },
+  setorBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.xs,
+  },
+  setorBadgeText: {
+    fontSize: 11,
+    color: colors.textSecondary,
     marginLeft: 3,
   },
   actionsRow: {

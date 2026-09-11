@@ -171,8 +171,3 @@ export async function getChecklistDetalhe(id: string): Promise<ChecklistDetalhe>
     respostas: (respostas ?? []).map(mapResposta),
   };
 }
-
-export async function excluirChecklist(id: string): Promise<void> {
-  const { error } = await supabase.from('checklists').delete().eq('id', id);
-  if (error) throw new Error(error.message);
-}

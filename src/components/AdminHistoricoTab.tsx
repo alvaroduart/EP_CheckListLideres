@@ -12,11 +12,10 @@ import {
   Text,
   View,
 } from 'react-native';
-import { excluirChecklist, getChecklistDetalhe, listChecklists } from '../db/checklistsRepo';
+import { getChecklistDetalhe, listChecklists } from '../db/checklistsRepo';
 import { useIsWideWeb } from '../hooks/useResponsive';
 import { colors, radius, shadow, spacing, typography } from '../theme/theme';
 import { ChecklistDetalhe, ChecklistRegistro } from '../types';
-import { excluirFoto } from '../utils/photos';
 
 function formatarDataHora(iso: string): string {
   const d = new Date(iso);
@@ -71,35 +70,6 @@ export default function AdminHistoricoTab() {
     } finally {
       setCarregandoDetalhe(false);
     }
-  };
-
-  const handleExcluir = (registro: ChecklistRegistro) => {
-    Alert.alert(
-      'Excluir checklist',
-      `Excluir o checklist de ${registro.responsavel} em ${registro.data}? Essa ação não pode ser desfeita.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              if (expandidoId === registro.id && detalhe) {
-                detalhe.respostas.forEach((r) => {
-                  if (r.fotoUri) excluirFoto(r.fotoUri);
-                });
-              }
-              await excluirChecklist(registro.id);
-              setExpandidoId(null);
-              setDetalhe(null);
-              await carregar();
-            } catch (err) {
-              Alert.alert('Erro', err instanceof Error ? err.message : 'Não foi possível excluir.');
-            }
-          },
-        },
-      ]
-    );
   };
 
   if (loading) {
@@ -204,10 +174,6 @@ export default function AdminHistoricoTab() {
                           )}
                         </View>
                       ))}
-                      <Pressable style={styles.deleteButton} onPress={() => handleExcluir(registro)}>
-                        <Ionicons name="trash-outline" size={14} color={colors.danger} />
-                        <Text style={styles.deleteButtonText}>Excluir checklist</Text>
-                      </Pressable>
                     </>
                   )}
                 </View>
@@ -376,18 +342,6 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: radius.sm,
     marginRight: spacing.sm,
-  },
-  deleteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-end',
-    marginTop: spacing.sm,
-  },
-  deleteButtonText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.danger,
-    marginLeft: 4,
   },
   previewOverlay: {
     flex: 1,
