@@ -1,0 +1,12 @@
+node_modules
+dist
+.expo
+.git
+.gitignore
+android
+ios
+*.apk
+*.jks
+*.p8
+*.p12
+*.mobileprovision
